@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.Switch
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -17,12 +18,21 @@ class AlarmRecyclerAdapter(
 
     var onSwitchChanged: ((alarm: Alarm, isChecked: Boolean) -> Unit)? = null
     var onItemClick: ((alarm: Alarm) -> Unit)? = null
+    var onItemLongClick: ((alarm: Alarm) -> Unit)? = null
+
+    // Новые колбэки для режима выделения
+    var onSelectionModeChanged: ((isSelectionMode: Boolean) -> Unit)? = null
+    var onSelectedCountChanged: ((count: Int) -> Unit)? = null
+
+    // Состояние выделения
+    private var isSelectionMode = false
+    private val selectedIds = mutableSetOf<Long>()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val checkBoxSelect: CheckBox = view.findViewById(R.id.checkBoxSelect)
         val timeTextView: TextView = view.findViewById(R.id.TimeTextView)
         val descriptionTextView: TextView = view.findViewById(R.id.DescriptionTextView)
         val repetitionRateTextView: TextView = view.findViewById(R.id.RepetitionRateTextView)
-        @SuppressLint("UseSwitchCompatOrMaterialCode")
         val isEnabledAlarmSwitch: Switch = view.findViewById(R.id.IsEnabledAlarmSwitch)
     }
 
@@ -39,18 +49,63 @@ class AlarmRecyclerAdapter(
         holder.descriptionTextView.text = alarm.description
         holder.repetitionRateTextView.text = alarm.getRepetitionText(context)
 
-        holder.isEnabledAlarmSwitch.setOnCheckedChangeListener(null)
-        holder.isEnabledAlarmSwitch.isChecked = alarm.isEnabled
-
-        holder.isEnabledAlarmSwitch.setOnCheckedChangeListener { _, isChecked ->
-            onSwitchChanged?.invoke(alarm, isChecked)
+        // Управляем видимостью элементов в зависимости от режима
+        if (isSelectionMode) {
+            holder.checkBoxSelect.visibility = View.VISIBLE
+            holder.isEnabledAlarmSwitch.visibility = View.GONE
+        } else {
+            holder.checkBoxSelect.visibility = View.GONE
+            holder.isEnabledAlarmSwitch.visibility = View.VISIBLE
         }
 
+        // Настройка Switch только в обычном режиме
+        if (!isSelectionMode) {
+            holder.isEnabledAlarmSwitch.setOnCheckedChangeListener(null)
+            holder.isEnabledAlarmSwitch.isChecked = alarm.isEnabled
+            holder.isEnabledAlarmSwitch.setOnCheckedChangeListener { _, isChecked ->
+                onSwitchChanged?.invoke(alarm, isChecked)
+            }
+        }
+
+        // Настройка CheckBox в режиме выделения
+        holder.checkBoxSelect.isChecked = selectedIds.contains(alarm.id)
+        holder.checkBoxSelect.setOnClickListener {
+            toggleSelection(alarm.id)
+            notifyItemChanged(position)
+        }
+
+        // Обработка кликов
         holder.itemView.setOnClickListener {
-            onItemClick?.invoke(alarm)
+            if (isSelectionMode) {
+                toggleSelection(alarm.id)
+                notifyItemChanged(position)
+            } else {
+                onItemClick?.invoke(alarm)
+            }
         }
 
-        setupRippleEffect(holder.itemView)
+        // Обработка долгого нажатия
+        holder.itemView.setOnLongClickListener {
+            if (!isSelectionMode) {
+                enterSelectionMode()
+                toggleSelection(alarm.id)
+                notifyItemChanged(position)
+                onItemLongClick?.invoke(alarm)
+                true
+            } else {
+                false
+            }
+        }
+
+        // Устанавливаем ripple эффект только в обычном режиме
+        if (!isSelectionMode) {
+            setupRippleEffect(holder.itemView)
+        } else {
+            holder.itemView.apply {
+                isClickable = true
+                foreground = null
+            }
+        }
     }
 
     private fun setupRippleEffect(view: View) {
@@ -72,4 +127,55 @@ class AlarmRecyclerAdapter(
         alarms = newAlarms
         notifyDataSetChanged()
     }
+
+    // Методы для управления выделением
+    fun enterSelectionMode() {
+        if (!isSelectionMode) {
+            isSelectionMode = true
+            selectedIds.clear()
+            notifyDataSetChanged()
+            onSelectionModeChanged?.invoke(true)
+            onSelectedCountChanged?.invoke(0)
+        }
+    }
+
+    fun exitSelectionMode() {
+        if (isSelectionMode) {
+            isSelectionMode = false
+            selectedIds.clear()
+            notifyDataSetChanged()
+            onSelectionModeChanged?.invoke(false)
+            onSelectedCountChanged?.invoke(0)
+        }
+    }
+
+    fun toggleSelection(alarmId: Long) {
+        if (selectedIds.contains(alarmId)) {
+            selectedIds.remove(alarmId)
+        } else {
+            selectedIds.add(alarmId)
+        }
+        onSelectedCountChanged?.invoke(selectedIds.size)
+    }
+
+    fun selectAll() {
+        selectedIds.clear()
+        selectedIds.addAll(alarms.map { it.id })
+        notifyDataSetChanged()
+        onSelectedCountChanged?.invoke(selectedIds.size)
+    }
+
+    fun deselectAll() {
+        selectedIds.clear()
+        notifyDataSetChanged()
+        onSelectedCountChanged?.invoke(0)
+    }
+
+    fun getSelectedAlarms(): List<Alarm> {
+        return alarms.filter { selectedIds.contains(it.id) }
+    }
+
+    fun isSelectionMode(): Boolean = isSelectionMode
+    fun getSelectedCount(): Int = selectedIds.size
+    fun isAllSelected(): Boolean = selectedIds.size == alarms.size
 }

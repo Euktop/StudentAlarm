@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--fragment alarms-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -25,6 +25,66 @@
         android:textSize="@dimen/text_size_medium"
         android:visibility="gone" />
 
+    <!-- Панель выделения -->
+    <LinearLayout
+        android:id="@+id/selectionToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="4dp"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:visibility="gone">
+
+        <ImageButton
+            android:id="@+id/btnCloseSelection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Выйти из режима выделения"
+            android:padding="8dp"
+            app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
+            app:tint="@color/black" />
+
+        <TextView
+            android:id="@+id/tvSelectedCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="Выделено: 0"
+            android:textColor="@color/black"
+            android:textSize="@dimen/text_size_medium"
+            tools:ignore="HardcodedText" />
+
+        <ImageButton
+            android:id="@+id/btnToggleSelectAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Выделить все"
+            android:padding="8dp"
+            app:srcCompat="@android:drawable/ic_menu_agenda"
+            app:tint="@color/black" />
+
+    </LinearLayout>
+
+    <!-- Кнопка удаления в режиме выделения -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabDelete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="@dimen/text_size_medium"
+        android:contentDescription="Удалить выделенные будильники"
+        android:visibility="gone"
+        app:srcCompat="@android:drawable/ic_menu_delete" />
+
+    <!-- Кнопка добавления в обычном режиме -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddAlarm"
         android:layout_width="wrap_content"
