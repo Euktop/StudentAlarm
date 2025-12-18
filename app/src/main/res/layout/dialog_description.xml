@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--dialog description-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editTextDescription"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:gravity="top"
+        android:inputType="textMultiLine"
+        android:maxLines="5"
+        android:textSize="@dimen/text_size_medium"
+        android:hint="@string/enter_a_description_of_the_alarm_clock"
+        />
+
+    <TextView
+        android:id="@+id/tvCharCount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="0/100"
+        android:textSize="@dimen/text_size_small"
+        android:textAlignment="textEnd"
+        android:layout_marginTop="4dp"
+        tools:ignore="HardcodedText" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/btnDescriptionDialogCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Cancel"
+            android:textSize="@dimen/text_size_medium"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnDescriptionDialogOk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_medium"
+            android:text="@string/OK" />
+
+    </LinearLayout>
+
+</LinearLayout>

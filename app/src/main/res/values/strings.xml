@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">StudentAlarm</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello</string>
+    <string name="Alarm">Alarm</string>
+    <string name="Timer">Timer</string>
+    <string name="RepeatOnce">Once</string>
+    <string name="RepeatDaily">Daily</string>
+    <string name="RepeatWeekdays">Weekdays</string>
+    <string name="RepeatWeekends">Weekends</string>
+
+    <string name="DayOfWeekMonday">Monday</string>
+    <string name="DayOfWeekTuesday">Tuesday</string>
+    <string name="DayOfWeekWednesday">Wednesday</string>
+    <string name="DayOfWeekThursday">Thursday</string>
+    <string name="DayOfWeekFriday">Friday</string>
+    <string name="DayOfWeekSaturday">Saturday</string>
+    <string name="DayOfWeekSunday">Sunday</string>
+
+    <string name="DayOfWeekMondayShort">Mo</string>
+    <string name="DayOfWeekTuesdayShort">Tu</string>
+    <string name="DayOfWeekWednesdayShort">We</string>
+    <string name="DayOfWeekThursdayShort">Th</string>
+    <string name="DayOfWeekFridayShort">Fr</string>
+    <string name="DayOfWeekSaturdayShort">Sa</string>
+    <string name="DayOfWeekSundayShort">Su</string>
+    <string name="Cancel">Cancel</string>
+    <string name="NewAlarm">New alarm clock</string>
+    <string name="Save">Save</string>
+    <string name="Repeat">Repeat</string>
+    <string name="SelectDays">Select days</string>
+    <string name="Description">Description</string>
+    <string name="AddDescription">Add Description</string>
+    <string name="click_to_select_the_time">Click to select the time</string>
+    <string name="Time">Time</string>
+    <string name="EditingAlarm">Editing the alarm clock</string>
+    <string name="AlarmNotFound">The alarm clock was not found</string>
+    <string name="SelectAlarmTime">Select the alarm time</string>
+    <string name="Set">Set</string>
+    <string name="OK">OK</string>
+    <string name="ChangeDescription">Change the description</string>
+    <string name="SaveError">Saving error</string>
+    <string name="IncorrectTime">Incorrect time</string>
+    <string name="MaximumDescriptionLength">The maximum description length is {x} characters</string>
+    <string name="DescriptionAlarm">Alarm Clock Description</string>
+    <string name="enter_a_description_of_the_alarm_clock">Enter a description of the alarm clock</string>
+</resources>

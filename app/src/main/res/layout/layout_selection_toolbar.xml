@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    >
+
+    <ImageButton
+        android:id="@+id/btnExitSelection"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@color/transparent"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:tint="@color/black" />
+
+    <TextView
+        android:id="@+id/tvSelectionCount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_vertical|start"
+        android:text="0 выбрано"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        android:paddingStart="16dp" />
+
+    <Button
+        android:id="@+id/btnSelectAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:text="ВЫБРАТЬ ВСЕ"
+        android:textColor="@color/black"
+        android:textAllCaps="true" />
+
+</LinearLayout>

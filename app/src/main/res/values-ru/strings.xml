@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Будильник Студента</string>
+    <string name="hello_blank_fragment">Привет</string>
+    <string name="Alarm">Будильник</string>
+    <string name="Timer">Таймер</string>
+    <string name="RepeatOnce">Один раз</string>
+    <string name="RepeatDaily">Ежедневно</string>
+    <string name="RepeatWeekdays">По будням</string>
+    <string name="RepeatWeekends">По выходным</string>
+
+    <string name="DayOfWeekMonday">Понедельник</string>
+    <string name="DayOfWeekTuesday">Вторник</string>
+    <string name="DayOfWeekWednesday">Среда</string>
+    <string name="DayOfWeekThursday">Четверг</string>
+    <string name="DayOfWeekFriday">Пятница</string>
+    <string name="DayOfWeekSaturday">Суббота</string>
+    <string name="DayOfWeekSunday">Воскресенье</string>
+
+    <string name="DayOfWeekMondayShort">Пн</string>
+    <string name="DayOfWeekTuesdayShort">Вт</string>
+    <string name="DayOfWeekWednesdayShort">Ср</string>
+    <string name="DayOfWeekThursdayShort">Чт</string>
+    <string name="DayOfWeekFridayShort">Пт</string>
+    <string name="DayOfWeekSaturdayShort">Сб</string>
+    <string name="DayOfWeekSundayShort">Вс</string>
+    <string name="Cancel">Отмена</string>
+    <string name="NewAlarm">Новый будильник</string>
+    <string name="Save">Сохранить</string>
+    <string name="Repeat">Повторить</string>
+    <string name="SelectDays">Выбрать дни</string>
+    <string name="Description">Описание</string>
+    <string name="AddDescription">Добавить описание</string>
+    <string name="click_to_select_the_time">"Нажмите для выбора времени "</string>
+    <string name="Time">Время</string>
+    <string name="EditingAlarm">Редактирование будильника</string>
+    <string name="AlarmNotFound">Будильник не найден</string>
+    <string name="SelectAlarmTime">"Выберите время будильника "</string>
+    <string name="Set">Установить</string>
+    <string name="OK">ОК</string>
+    <string name="ChangeDescription">Изменить описание</string>
+    <string name="SaveError">Ошибка сохранения</string>
+    <string name="IncorrectTime">Некорректное время</string>
+    <string name="MaximumDescriptionLength">Максимальная длина описания составляет {x} символов</string>
+    <string name="DescriptionAlarm">Описание будильника</string>
+    <string name="enter_a_description_of_the_alarm_clock">Введите описание будильника</string>
+</resources>

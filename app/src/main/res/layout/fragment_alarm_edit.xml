@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--fragment alarm edit-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="32dp">
+
+            <ImageButton
+                android:id="@+id/btnCancel"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@color/transparent"
+                android:contentDescription="@string/Cancel"
+                app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/black" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:paddingHorizontal="8dp"
+                android:text="@string/NewAlarm"
+                android:textColor="@color/black"
+                android:textSize="@dimen/text_size_medium"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <ImageButton
+                android:id="@+id/btnSave"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@color/transparent"
+                android:contentDescription="@string/Save"
+                app:tint="@color/black"
+                app:srcCompat="@android:drawable/ic_menu_save" />
+
+        </LinearLayout>
+
+        <!-- Выбор времени -->
+        <LinearLayout
+            android:id="@+id/timeSelectionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="@string/Time"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="@dimen/text_size_medium" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/rounded_time_background"
+                android:padding="8dp">
+
+                <!-- Часы -->
+                <TextView
+                    android:id="@+id/tvHour"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12"
+                    android:textSize="48sp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:minWidth="80dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:fontFamily="sans-serif-light"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=":"
+                    android:textSize="48sp"
+                    android:paddingHorizontal="8dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:fontFamily="sans-serif-light"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Минуты -->
+                <TextView
+                    android:id="@+id/tvMinute"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="30"
+                    android:textSize="48sp"
+                    android:paddingHorizontal="@dimen/padding_horizontal_element"
+                    android:paddingVertical="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:minWidth="80dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:fontFamily="sans-serif-light"
+                    tools:ignore="HardcodedText" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/click_to_select_the_time"
+                android:textColor="?android:attr/textColorTertiary"
+                android:textSize="@dimen/text_size_small" />
+
+        </LinearLayout>
+
+        <!-- Повторять -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="@string/Repeat"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="@dimen/text_size_medium"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnRepeat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/SelectDays"
+                android:textAllCaps="false"
+                android:textSize="@dimen/text_size_medium" />
+
+            <TextView
+                android:id="@+id/tvSelectedDays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="@dimen/padding_horizontal_element"
+                android:text="@string/RepeatOnce"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="@dimen/text_size_small" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="@string/Description"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="@dimen/text_size_medium"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/AddDescription"
+                android:textAllCaps="false"
+                android:textSize="@dimen/text_size_medium" />
+
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="@dimen/padding_horizontal_element"
+                android:text="@string/Description"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="@dimen/text_size_small" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
