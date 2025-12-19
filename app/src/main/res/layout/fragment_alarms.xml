@@ -25,16 +25,15 @@
         android:textSize="@dimen/text_size_medium"
         android:visibility="gone" />
 
-    <!-- Панель выделения -->
+    <!-- Панель выделения с фиксированной высотой -->
     <LinearLayout
         android:id="@+id/selectionToolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:background="@color/white"
         android:elevation="4dp"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
         android:visibility="gone">
 
         <ImageButton
@@ -68,7 +67,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Выделить все"
             android:padding="8dp"
-            app:srcCompat="@android:drawable/ic_menu_agenda"
+            app:srcCompat="@drawable/select_all"
             app:tint="@color/black" />
 
     </LinearLayout>

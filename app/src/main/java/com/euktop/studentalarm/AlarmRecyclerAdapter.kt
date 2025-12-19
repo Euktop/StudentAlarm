@@ -34,6 +34,7 @@ class AlarmRecyclerAdapter(
         val descriptionTextView: TextView = view.findViewById(R.id.DescriptionTextView)
         val repetitionRateTextView: TextView = view.findViewById(R.id.RepetitionRateTextView)
         val isEnabledAlarmSwitch: Switch = view.findViewById(R.id.IsEnabledAlarmSwitch)
+        val itemLayout: View = view.findViewById(R.id.itemLayout)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -97,18 +98,16 @@ class AlarmRecyclerAdapter(
             }
         }
 
-        // Устанавливаем ripple эффект только в обычном режиме
-        if (!isSelectionMode) {
-            setupRippleEffect(holder.itemView)
-        } else {
-            holder.itemView.apply {
-                isClickable = true
-                foreground = null
-            }
-        }
+        // Устанавливаем ripple эффект ВСЕГДА
+        setupRippleEffect(holder.itemView)
+
+        // Делаем элемент кликабельным в любом режиме
+        holder.itemView.isClickable = true
+        holder.itemView.isLongClickable = true
     }
 
     private fun setupRippleEffect(view: View) {
+        // Используем атрибут selectableItemBackground для ripple эффекта
         val attrs = intArrayOf(android.R.attr.selectableItemBackground)
         val typedArray = context.obtainStyledAttributes(attrs)
         val backgroundResource = typedArray.getResourceId(0, 0)

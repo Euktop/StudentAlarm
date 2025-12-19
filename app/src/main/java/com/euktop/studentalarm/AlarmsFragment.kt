@@ -28,7 +28,6 @@ class AlarmsFragment : Fragment() {
 
     private var isFabHidden = false
     private var isAnimating = false
-    private var originalPaddingTop = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,23 +50,21 @@ class AlarmsFragment : Fragment() {
         setupClickListeners()
         setupScrollListenerWithTranslation()
         setupSelectionListeners()
-
-        // Сохраняем оригинальный отступ
-        originalPaddingTop = binding.recyclerView.paddingTop
     }
 
     private fun setupSelectionListeners() {
         adapter.onSelectionModeChanged = { isSelectionMode ->
             if (isSelectionMode) {
-                enterSelectionMode()
+                showSelectionMode()
             } else {
-                exitSelectionMode()
+                hideSelectionMode()
             }
         }
 
         adapter.onSelectedCountChanged = { count ->
             binding.tvSelectedCount.text = "Выделено: $count"
 
+            // Меняем иконку кнопки выделить все
             if (adapter.isAllSelected()) {
                 binding.btnToggleSelectAll.setImageResource(R.drawable.deselect_all)
                 binding.btnToggleSelectAll.contentDescription = "Снять выделение"
@@ -160,7 +157,6 @@ class AlarmsFragment : Fragment() {
             }
             .start()
     }
-
     private fun setupRecyclerView() {
         adapter = AlarmRecyclerAdapter(requireContext())
 
@@ -243,50 +239,35 @@ class AlarmsFragment : Fragment() {
         }
     }
 
-    private fun enterSelectionMode() {
-        // Сохраняем позицию прокрутки перед добавлением панели
-        val layoutManager = binding.recyclerView.layoutManager as LinearLayoutManager
-        val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
-        val topOffset = if (firstVisiblePosition == RecyclerView.NO_POSITION) 0
-        else layoutManager.findViewByPosition(firstVisiblePosition)?.top ?: 0
-
-        // Показываем панель выделения
-        binding.selectionToolbar.visibility = View.VISIBLE
+    private fun showSelectionMode() {
+         binding.selectionToolbar.visibility = View.VISIBLE
         binding.fabDelete.visibility = View.VISIBLE
         binding.fabAddAlarm.visibility = View.GONE
 
-        // Добавляем отступ сверху для RecyclerView, чтобы компенсировать панель
-        val toolbarHeight = binding.selectionToolbar.measuredHeight
-        binding.recyclerView.setPadding(
-            binding.recyclerView.paddingLeft,
-            originalPaddingTop + toolbarHeight,
-            binding.recyclerView.paddingRight,
-            binding.recyclerView.paddingBottom
-        )
+        binding.selectionToolbar.post {
+            val toolbarHeight = binding.selectionToolbar.height
 
-        // Восстанавливаем позицию прокрутки
-        if (firstVisiblePosition != RecyclerView.NO_POSITION) {
-            binding.recyclerView.post {
-                layoutManager.scrollToPositionWithOffset(firstVisiblePosition, topOffset)
-            }
+            binding.recyclerView.setPadding(
+                binding.recyclerView.paddingLeft,
+                toolbarHeight,
+                binding.recyclerView.paddingRight,
+                binding.recyclerView.paddingBottom
+            )
         }
     }
 
-    private fun exitSelectionMode() {
-        // Скрываем панель выделения
+    private fun hideSelectionMode() {
         binding.selectionToolbar.visibility = View.GONE
         binding.fabDelete.visibility = View.GONE
         binding.fabAddAlarm.visibility = View.VISIBLE
 
-        // Восстанавливаем оригинальный отступ
         binding.recyclerView.setPadding(
             binding.recyclerView.paddingLeft,
-            originalPaddingTop,
+            0,
             binding.recyclerView.paddingRight,
             binding.recyclerView.paddingBottom
         )
 
-        // Сбрасываем скролл FAB
         binding.fabAddAlarm.translationY = 0f
         isFabHidden = false
     }
@@ -295,7 +276,6 @@ class AlarmsFragment : Fragment() {
         val selectedAlarms = adapter.getSelectedAlarms()
         if (selectedAlarms.isEmpty()) return
 
-        // TODO: Создать диалог подтверждения удаления
         lifecycleScope.launch {
             selectedAlarms.forEach { alarm ->
                 viewModel.deleteAlarm(alarm)
