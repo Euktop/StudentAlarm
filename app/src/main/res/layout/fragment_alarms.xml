@@ -25,7 +25,6 @@
         android:textSize="@dimen/text_size_medium"
         android:visibility="gone" />
 
-    <!-- Панель выделения с фиксированной высотой -->
     <LinearLayout
         android:id="@+id/selectionToolbar"
         android:layout_width="match_parent"

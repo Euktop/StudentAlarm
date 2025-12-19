@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">StudentAlarm</string>
     <!-- TODO: Remove or change this placeholder text -->
@@ -44,4 +45,12 @@
     <string name="MaximumDescriptionLength">The maximum description length is {x} characters</string>
     <string name="DescriptionAlarm">Alarm Clock Description</string>
     <string name="enter_a_description_of_the_alarm_clock">Enter a description of the alarm clock</string>
+
+    <!-- Новые строки для удаления будильников -->
+    <string name="delete_alarms_title">Delete alarms</string>
+    <string name="delete_alarms_message">Are you sure you want to delete %d alarm(s)?</string>
+    <string name="delete">Delete</string>
+    <string name="selected_count">Selected: %d</string>
+    <string name="remove_selection">Remove the selection</string>
+    <string name="select_all">Select all</string>
 </resources>

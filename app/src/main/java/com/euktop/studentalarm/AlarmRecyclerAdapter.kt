@@ -20,11 +20,9 @@ class AlarmRecyclerAdapter(
     var onItemClick: ((alarm: Alarm) -> Unit)? = null
     var onItemLongClick: ((alarm: Alarm) -> Unit)? = null
 
-    // Новые колбэки для режима выделения
     var onSelectionModeChanged: ((isSelectionMode: Boolean) -> Unit)? = null
     var onSelectedCountChanged: ((count: Int) -> Unit)? = null
 
-    // Состояние выделения
     private var isSelectionMode = false
     private val selectedIds = mutableSetOf<Long>()
 
@@ -33,6 +31,7 @@ class AlarmRecyclerAdapter(
         val timeTextView: TextView = view.findViewById(R.id.TimeTextView)
         val descriptionTextView: TextView = view.findViewById(R.id.DescriptionTextView)
         val repetitionRateTextView: TextView = view.findViewById(R.id.RepetitionRateTextView)
+        @SuppressLint("UseSwitchCompatOrMaterialCode")
         val isEnabledAlarmSwitch: Switch = view.findViewById(R.id.IsEnabledAlarmSwitch)
         val itemLayout: View = view.findViewById(R.id.itemLayout)
     }
@@ -50,7 +49,6 @@ class AlarmRecyclerAdapter(
         holder.descriptionTextView.text = alarm.description
         holder.repetitionRateTextView.text = alarm.getRepetitionText(context)
 
-        // Управляем видимостью элементов в зависимости от режима
         if (isSelectionMode) {
             holder.checkBoxSelect.visibility = View.VISIBLE
             holder.isEnabledAlarmSwitch.visibility = View.GONE
@@ -59,7 +57,6 @@ class AlarmRecyclerAdapter(
             holder.isEnabledAlarmSwitch.visibility = View.VISIBLE
         }
 
-        // Настройка Switch только в обычном режиме
         if (!isSelectionMode) {
             holder.isEnabledAlarmSwitch.setOnCheckedChangeListener(null)
             holder.isEnabledAlarmSwitch.isChecked = alarm.isEnabled
@@ -68,14 +65,12 @@ class AlarmRecyclerAdapter(
             }
         }
 
-        // Настройка CheckBox в режиме выделения
         holder.checkBoxSelect.isChecked = selectedIds.contains(alarm.id)
         holder.checkBoxSelect.setOnClickListener {
             toggleSelection(alarm.id)
             notifyItemChanged(position)
         }
 
-        // Обработка кликов
         holder.itemView.setOnClickListener {
             if (isSelectionMode) {
                 toggleSelection(alarm.id)
@@ -85,7 +80,6 @@ class AlarmRecyclerAdapter(
             }
         }
 
-        // Обработка долгого нажатия
         holder.itemView.setOnLongClickListener {
             if (!isSelectionMode) {
                 enterSelectionMode()
@@ -98,16 +92,13 @@ class AlarmRecyclerAdapter(
             }
         }
 
-        // Устанавливаем ripple эффект ВСЕГДА
         setupRippleEffect(holder.itemView)
 
-        // Делаем элемент кликабельным в любом режиме
         holder.itemView.isClickable = true
         holder.itemView.isLongClickable = true
     }
 
     private fun setupRippleEffect(view: View) {
-        // Используем атрибут selectableItemBackground для ripple эффекта
         val attrs = intArrayOf(android.R.attr.selectableItemBackground)
         val typedArray = context.obtainStyledAttributes(attrs)
         val backgroundResource = typedArray.getResourceId(0, 0)
@@ -127,7 +118,6 @@ class AlarmRecyclerAdapter(
         notifyDataSetChanged()
     }
 
-    // Методы для управления выделением
     fun enterSelectionMode() {
         if (!isSelectionMode) {
             isSelectionMode = true
@@ -175,6 +165,5 @@ class AlarmRecyclerAdapter(
     }
 
     fun isSelectionMode(): Boolean = isSelectionMode
-    fun getSelectedCount(): Int = selectedIds.size
     fun isAllSelected(): Boolean = selectedIds.size == alarms.size
 }

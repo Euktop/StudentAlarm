@@ -44,4 +44,12 @@
     <string name="MaximumDescriptionLength">Максимальная длина описания составляет {x} символов</string>
     <string name="DescriptionAlarm">Описание будильника</string>
     <string name="enter_a_description_of_the_alarm_clock">Введите описание будильника</string>
+
+    <!-- Новые строки для удаления будильников -->
+    <string name="delete_alarms_title">Удаление будильников</string>
+    <string name="delete_alarms_message">Вы действительно хотите удалить %d будильник(а)?</string>
+    <string name="delete">Удалить</string>
+    <string name="selected_count">Выделено: %d</string>
+    <string name="remove_selection">Снять выделение</string>
+    <string name="select_all">Выделить все</string>
 </resources>

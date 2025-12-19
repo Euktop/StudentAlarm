@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -62,15 +63,14 @@ class AlarmsFragment : Fragment() {
         }
 
         adapter.onSelectedCountChanged = { count ->
-            binding.tvSelectedCount.text = "Выделено: $count"
+            binding.tvSelectedCount.text = getString(R.string.selected_count, count)
 
-            // Меняем иконку кнопки выделить все
             if (adapter.isAllSelected()) {
                 binding.btnToggleSelectAll.setImageResource(R.drawable.deselect_all)
-                binding.btnToggleSelectAll.contentDescription = "Снять выделение"
+                binding.btnToggleSelectAll.contentDescription = getString(R.string.remove_selection)
             } else {
                 binding.btnToggleSelectAll.setImageResource(R.drawable.select_all)
-                binding.btnToggleSelectAll.contentDescription = "Выделить все"
+                binding.btnToggleSelectAll.contentDescription = getString(R.string.select_all)
             }
         }
     }
@@ -88,7 +88,6 @@ class AlarmsFragment : Fragment() {
                 val canScrollUp = recyclerView.canScrollVertically(-1)
                 isAtTop = !canScrollUp
 
-                // Не скрываем FAB в режиме выделения
                 if (adapter.isSelectionMode()) {
                     return
                 }
@@ -180,17 +179,11 @@ class AlarmsFragment : Fragment() {
                     .build()
             )
         }
-
-        adapter.onItemLongClick = { alarm ->
-            // Режим выделения активируется автоматически в адаптере
-        }
-
         adapter.onSwitchChanged = { alarm, isChecked ->
             lifecycleScope.launch {
                 viewModel.updateAlarm(alarm.copy(isEnabled = isChecked))
             }
         }
-
         binding.recyclerView.adapter = adapter
     }
 
@@ -219,12 +212,10 @@ class AlarmsFragment : Fragment() {
             )
         }
 
-        // Кнопка выхода из режима выделения
         binding.btnCloseSelection.setOnClickListener {
             adapter.exitSelectionMode()
         }
 
-        // Кнопка выделить все/снять выделение
         binding.btnToggleSelectAll.setOnClickListener {
             if (adapter.isAllSelected()) {
                 adapter.deselectAll()
@@ -233,7 +224,6 @@ class AlarmsFragment : Fragment() {
             }
         }
 
-        // Кнопка удаления выделенных будильников
         binding.fabDelete.setOnClickListener {
             deleteSelectedAlarms()
         }
@@ -274,17 +264,31 @@ class AlarmsFragment : Fragment() {
 
     private fun deleteSelectedAlarms() {
         val selectedAlarms = adapter.getSelectedAlarms()
-        if (selectedAlarms.isEmpty()) return
-
-        lifecycleScope.launch {
-            selectedAlarms.forEach { alarm ->
-                viewModel.deleteAlarm(alarm)
-            }
+        if (selectedAlarms.isEmpty()) {
             adapter.exitSelectionMode()
+            return
         }
+
+        val count = selectedAlarms.size
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.delete_alarms_title))
+            .setMessage(getString(R.string.delete_alarms_message, count))
+            .setPositiveButton(getString(R.string.delete)) { dialog, _ ->
+                lifecycleScope.launch {
+                    selectedAlarms.forEach { alarm ->
+                        viewModel.deleteAlarm(alarm)
+                    }
+                    adapter.exitSelectionMode()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(getString(R.string.Cancel)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
     }
 
-    // Обработка кнопки "Назад"
     override fun onResume() {
         super.onResume()
         requireView().isFocusableInTouchMode = true
