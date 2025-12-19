@@ -45,7 +45,7 @@ class AlarmEditFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val app = requireActivity().application as AlarmApplication
-        val viewModelFactory = ViewModelFactory(app.alarmRepository)
+        val viewModelFactory = ViewModelFactory(app.alarmRepository, requireContext())
         viewModel = ViewModelProvider(this, viewModelFactory)[AlarmViewModel::class.java]
 
         arguments?.let {

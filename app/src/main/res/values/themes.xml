@@ -1,9 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.StudentAlarm" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your theme here. -->
     </style>
 
     <style name="Theme.StudentAlarm" parent="Base.Theme.StudentAlarm" />
+
+    <style name="Theme.StudentAlarm.FullScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 
     <style name="AlarmBottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
         <item name="backgroundTint">@android:color/transparent</item>

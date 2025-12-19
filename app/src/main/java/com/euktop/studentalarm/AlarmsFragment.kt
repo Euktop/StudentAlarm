@@ -1,6 +1,7 @@
 package com.euktop.studentalarm
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -41,18 +43,18 @@ class AlarmsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val app = requireActivity().application as AlarmApplication
-        val viewModelFactory = ViewModelFactory(app.alarmRepository)
-        viewModel = ViewModelProvider(this, viewModelFactory)[AlarmViewModel::class.java]
-
+        setupViewModel()
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
         setupScrollListenerWithTranslation()
         setupSelectionListeners()
     }
-
+    private fun setupViewModel() {
+        val app = requireActivity().application as AlarmApplication
+        val viewModelFactory = ViewModelFactory(app.alarmRepository, requireContext())
+        viewModel = ViewModelProvider(this, viewModelFactory)[AlarmViewModel::class.java]
+    }
     private fun setupSelectionListeners() {
         adapter.onSelectionModeChanged = { isSelectionMode ->
             if (isSelectionMode) {
@@ -77,7 +79,7 @@ class AlarmsFragment : Fragment() {
 
     private fun setupScrollListenerWithTranslation() {
         val fabHideThreshold = 10
-        var isAtTop = true
+        var isAtTop: Boolean
 
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var accumulatedDy = 0
@@ -171,7 +173,7 @@ class AlarmsFragment : Fragment() {
             findNavController().navigate(
                 R.id.action_alarmsFragment_to_alarmEditFragment,
                 bundle,
-                androidx.navigation.NavOptions.Builder()
+                NavOptions.Builder()
                     .setEnterAnim(R.anim.slide_in_bottom)
                     .setExitAnim(android.R.anim.fade_out)
                     .setPopEnterAnim(android.R.anim.fade_in)
@@ -203,7 +205,7 @@ class AlarmsFragment : Fragment() {
             findNavController().navigate(
                 R.id.action_alarmsFragment_to_alarmEditFragment,
                 bundle,
-                androidx.navigation.NavOptions.Builder()
+                NavOptions.Builder()
                     .setEnterAnim(R.anim.slide_in_bottom)
                     .setExitAnim(android.R.anim.fade_out)
                     .setPopEnterAnim(android.R.anim.fade_in)
@@ -294,7 +296,7 @@ class AlarmsFragment : Fragment() {
         requireView().isFocusableInTouchMode = true
         requireView().requestFocus()
         requireView().setOnKeyListener { _, keyCode, event ->
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_UP) {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
                 if (adapter.isSelectionMode()) {
                     adapter.exitSelectionMode()
                     return@setOnKeyListener true

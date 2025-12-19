@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Night version of Base.Theme.StudentAlarm -->
-    <style name="Base.Theme.StudentAlarm" parent="Theme.Material3.DayNight.NoActionBar">
-    </style>
+<resources>
 
     <style name="Theme.StudentAlarm.FullScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowFullscreen">true</item>
@@ -10,5 +7,8 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowIsFloating">false</item>
         <item name="android:backgroundDimEnabled">false</item>
+        <!-- Для Android 10+ чтобы activity показывалась поверх блокировки -->
+        <item name="android:showWhenLocked">true</item>
+        <item name="android:turnScreenOn">true</item>
     </style>
 </resources>
