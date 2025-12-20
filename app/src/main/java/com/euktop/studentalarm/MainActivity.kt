@@ -30,7 +30,9 @@ class MainActivity : AppCompatActivity() {
     private var isBottomNavAnimating = false
     private var isBottomNavVisible = true
 
-    // Для запроса разрешения на уведомления (API 33+)
+    // Флаг для предотвращения многократной проверки
+    private var hasCheckedMissedAlarms = false
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -42,17 +44,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Проверяем разрешения при запуске приложения
+        // Проверяем разрешения
         checkPermissionsOnStartup()
 
-        // Настройка обработки системных окон
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Настройка обратного вызова для жеста "Назад"
         setupBackPressedHandler()
 
         frameNameTextView = findViewById(R.id.FrameNameTextView)
@@ -136,17 +136,31 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // При возвращении в приложение проверяем разрешения и отключаем будильники при необходимости
+
+        // Проверяем пропущенные будильники только если флаг не установлен
+        if (!hasCheckedMissedAlarms) {
+            checkMissedAlarmsOnStart()
+            hasCheckedMissedAlarms = true
+        }
+
         checkPermissionsAndDisableAlarms()
     }
 
+    private fun checkMissedAlarmsOnStart() {
+        lifecycleScope.launch {
+            // Даем время приложению полностью запуститься
+            kotlinx.coroutines.delay(2000)
+
+            val app = application as AlarmApplication
+            AlarmScheduler.checkMissedAlarms(this@MainActivity, app.alarmRepository)
+        }
+    }
+
     private fun checkPermissionsOnStartup() {
-        // Показываем диалог со всеми необходимыми разрешениями
         if (!PermissionManager.hasAllAlarmPermissions(this)) {
             PermissionManager.showAllPermissionsDialog(this)
         }
 
-        // Дополнительно запрашиваем разрешение на уведомления для Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (!PermissionManager.hasNotificationPermission(this)) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -155,9 +169,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissionsAndDisableAlarms() {
-        // Проверяем, есть ли все необходимые разрешения
         if (!PermissionManager.hasAllAlarmPermissions(this)) {
-            // Нет разрешений - отключаем все будильники
             disableAllAlarms()
         }
     }
@@ -167,9 +179,7 @@ class MainActivity : AppCompatActivity() {
             val app = application as AlarmApplication
             val alarms = app.alarmRepository.getAllAlarms().first()
 
-            // Проверяем, есть ли вообще будильники
             if (alarms.isEmpty()) {
-                // Нет будильников - ничего не делаем и не показываем сообщение
                 return@launch
             }
 
@@ -177,9 +187,7 @@ class MainActivity : AppCompatActivity() {
 
             alarms.forEach { alarm ->
                 if (alarm.isEnabled) {
-                    // Отключаем будильник в базе данных
-                    app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false))
-                    // Отменяем запланированный будильник
+                    app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false, nextTriggerTime = 0L))
                     AlarmScheduler.cancelAlarm(this@MainActivity, alarm.id)
                     disabledCount++
                 }
@@ -215,8 +223,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        // Не показываем сообщения о результате запроса разрешений
+        // Не показываем сообщение о результате
     }
 
     private fun animateBottomNavigationContainer(show: Boolean) {
@@ -274,7 +281,6 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    // Метод для проверки разрешений перед выполнением действия
     fun checkAlarmPermissionsAndExecute(action: () -> Unit) {
         PermissionManager.checkAllPermissionsBeforeAction(this, action)
     }

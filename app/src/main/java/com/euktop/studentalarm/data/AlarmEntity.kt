@@ -25,10 +25,12 @@ data class AlarmEntity(
     @ColumnInfo(name = "is_enabled")
     val isEnabled: Boolean,
 
+    @ColumnInfo(name = "next_trigger_time", defaultValue = "0")
+    val nextTriggerTime: Long = 0L, // Новое поле
+
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis()
 ) {
-    // Добавляем метод конвертации
     fun toAlarm(): Alarm {
         val daysList = if (daysOfWeek.isNotEmpty()) {
             daysOfWeek.split(",").map { it.toInt() }
@@ -42,7 +44,8 @@ data class AlarmEntity(
             minute = minute,
             description = description,
             daysOfWeek = daysList,
-            isEnabled = isEnabled
+            isEnabled = isEnabled,
+            nextTriggerTime = nextTriggerTime
         )
     }
 }

@@ -18,16 +18,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class AlarmActivity : AppCompatActivity() {
-    private lateinit var mediaPlayer: MediaPlayer
-    private lateinit var vibrator: Vibrator
+    private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
     private var alarmIds: LongArray = longArrayOf()
+    private var isAlarmRunning = false
+    private var hasStartedAlarm = false
 
     companion object {
         private var isAlarmActive = false
 
         fun startAlarm(context: Context, alarmIds: LongArray) {
-            // Проверяем, не запущена ли уже активность
-            if (isAlarmActive) return
+            if (isAlarmActive) {
+                return
+            }
 
             val intent = Intent(context, AlarmActivity::class.java).apply {
                 putExtra("all_alarm_ids", alarmIds)
@@ -35,18 +38,17 @@ class AlarmActivity : AppCompatActivity() {
                         Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
 
-            // Пытаемся запустить активность
             try {
                 context.startActivity(intent)
                 isAlarmActive = true
             } catch (e: Exception) {
-                // Если не получилось, используем FullScreenIntent
                 showFullScreenNotification(context, alarmIds)
             }
         }
 
+        fun isAlarmActive(): Boolean = isAlarmActive
+
         private fun showFullScreenNotification(context: Context, alarmIds: LongArray) {
-            // Создаем PendingIntent для активности
             val activityIntent = Intent(context, AlarmActivity::class.java).apply {
                 putExtra("all_alarm_ids", alarmIds)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -69,11 +71,9 @@ class AlarmActivity : AppCompatActivity() {
                 )
             }
 
-            // Создаем уведомление с FullScreenIntent
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
                     as android.app.NotificationManager
 
-            // Создаем канал для Android 8.0+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = android.app.NotificationChannel(
                     "alarm_fullscreen_channel",
@@ -115,7 +115,6 @@ class AlarmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Устанавливаем флаги ДО setContentView
         window.addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
@@ -123,7 +122,6 @@ class AlarmActivity : AppCompatActivity() {
                     WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
         )
 
-        // Для Android 8.0+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -131,10 +129,25 @@ class AlarmActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_alarm)
 
-        // Получаем ID будильников
         alarmIds = intent.getLongArrayExtra("all_alarm_ids") ?: longArrayOf()
 
-        // Загружаем информацию о будильниках
+        // ОБНОВЛЯЕМ СОСТОЯНИЕ БУДИЛЬНИКОВ ПЕРЕД ЗАПУСКОМ
+        CoroutineScope(Dispatchers.IO).launch {
+            val app = application as AlarmApplication
+            alarmIds.forEach { id ->
+                val alarm = app.alarmRepository.getAlarmById(id)
+                alarm?.let {
+                    if (it.daysOfWeek.isEmpty()) {
+                        // Неповторяющийся: отключаем
+                        app.alarmRepository.updateAlarm(it.copy(isEnabled = false, nextTriggerTime = 0L))
+                        AlarmScheduler.cancelAlarm(this@AlarmActivity, it.id)
+                    }
+                    // Для повторяющихся ничего не делаем - они уже обработаны в AlarmReceiver
+                }
+            }
+        }
+
+        // Отображаем описание будильников
         CoroutineScope(Dispatchers.IO).launch {
             val app = application as AlarmApplication
             var alarmText = ""
@@ -152,12 +165,14 @@ class AlarmActivity : AppCompatActivity() {
                 val tvDescription = findViewById<TextView>(R.id.tvAlarmDescription)
                 tvDescription.text = alarmText
 
-                // Запускаем звук и вибрацию
-                startAlarm()
+                // ЗАПУСКАЕМ ЗВУК И ВИБРАЦИЮ ТОЛЬКО ПОСЛЕ ТОГО, КАК UI ГОТОВ
+                if (!hasStartedAlarm) {
+                    startAlarm()
+                    hasStartedAlarm = true
+                }
             }
         }
 
-        // Кнопка "Отключить все"
         findViewById<Button>(R.id.btnDismiss).setOnClickListener {
             dismissAllAlarms()
         }
@@ -165,7 +180,6 @@ class AlarmActivity : AppCompatActivity() {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        // Для Android 12+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -173,54 +187,54 @@ class AlarmActivity : AppCompatActivity() {
     }
 
     private fun startAlarm() {
-        // Вибрация
-        vibrator = getSystemService(Vibrator::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(android.os.VibrationEffect.createWaveform(
-                longArrayOf(0, 667, 333, 667), 0
-            ))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 667, 333, 667), 0)
-        }
+        try {
+            if (isAlarmRunning) return
 
-        // Звук будильника через MediaPlayer
-        val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            // Запускаем вибрацию
+            vibrator = getSystemService(Vibrator::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(
+                    longArrayOf(0, 667, 333, 667), 0
+                ))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(longArrayOf(0, 667, 333, 667), 0)
+            }
 
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(this@AlarmActivity, alarmUri)
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            setAudioAttributes(audioAttributes)
-            isLooping = true
-            prepare()
-            start()
+            // Запускаем звук будильника
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(this@AlarmActivity, alarmUri)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setAudioAttributes(audioAttributes)
+                isLooping = true
+                prepare()
+                start()
+                setOnCompletionListener {
+                    // Если звук закончился (например, если рингтон короткий), перезапускаем
+                    if (isAlarmRunning) {
+                        start()
+                    }
+                }
+            }
+
+            isAlarmRunning = true
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     private fun dismissAllAlarms() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val app = application as AlarmApplication
-            alarmIds.forEach { id ->
-                val alarm = app.alarmRepository.getAlarmById(id)
-                alarm?.let {
-                    app.alarmRepository.updateAlarm(it.copy(isEnabled = false))
-                    AlarmScheduler.cancelAlarm(this@AlarmActivity, id)
-                }
-            }
-        }
-
-        // Останавливаем звук и вибрацию
-        mediaPlayer.stop()
-        mediaPlayer.release()
-        vibrator.cancel()
+        stopAlarm()
 
         AlarmActivity.resetAlarmState()
 
-        // Закрываем уведомление, если есть
+        // Отменяем уведомление, если есть
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
                 as android.app.NotificationManager
         notificationManager.cancel(9999)
@@ -228,15 +242,38 @@ class AlarmActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun stopAlarm() {
+        if (!isAlarmRunning) return
+
+        isAlarmRunning = false
+
+        // Останавливаем звук
+        mediaPlayer?.let {
+            try {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.release()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            mediaPlayer = null
+        }
+
+        // Останавливаем вибрацию
+        vibrator?.let {
+            try {
+                it.cancel()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            vibrator = null
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        if (::mediaPlayer.isInitialized) {
-            mediaPlayer.stop()
-            mediaPlayer.release()
-        }
-        if (::vibrator.isInitialized) {
-            vibrator.cancel()
-        }
+        stopAlarm()
         AlarmActivity.resetAlarmState()
     }
 }

@@ -12,6 +12,7 @@ data class Alarm(
     val description: String = "",
     val daysOfWeek: List<Int> = emptyList(),
     var isEnabled: Boolean = true,
+    var nextTriggerTime: Long = 0L // Новое поле
 ) {
     @SuppressLint("DefaultLocale")
     fun formattedTime(): String = String.format("%02d:%02d", hour, minute)
@@ -48,7 +49,8 @@ data class Alarm(
             minute = this.minute,
             description = this.description,
             daysOfWeek = this.daysOfWeek.joinToString(","),
-            isEnabled = this.isEnabled
+            isEnabled = this.isEnabled,
+            nextTriggerTime = this.nextTriggerTime
         )
     }
 
@@ -73,7 +75,8 @@ data class Alarm(
                 minute = entity.minute,
                 description = entity.description,
                 daysOfWeek = daysList,
-                isEnabled = entity.isEnabled
+                isEnabled = entity.isEnabled,
+                nextTriggerTime = entity.nextTriggerTime
             )
         }
 

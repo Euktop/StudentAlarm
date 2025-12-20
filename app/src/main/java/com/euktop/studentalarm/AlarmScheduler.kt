@@ -5,10 +5,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.provider.Settings
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import com.euktop.studentalarm.data.AlarmRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -17,7 +21,6 @@ object AlarmScheduler {
     const val ALARM_DESCRIPTION_EXTRA = "alarm_description"
 
     suspend fun rescheduleAllAlarms(context: Context, repository: AlarmRepository) {
-        // Проверяем разрешения перед планированием
         if (!PermissionManager.hasAllAlarmPermissions(context)) {
             return
         }
@@ -37,16 +40,13 @@ object AlarmScheduler {
             return
         }
 
-        // Проверяем все необходимые разрешения
         if (!PermissionManager.hasAllAlarmPermissions(context)) {
             return
         }
 
-        // Для Android 12+ проверяем разрешение на установку точных будильников
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (!alarmManager.canScheduleExactAlarms()) {
-                // Запрашиваем разрешение через настройки
                 PermissionManager.requestScheduleExactAlarmPermission(context as android.app.Activity)
                 return
             }
@@ -68,10 +68,14 @@ object AlarmScheduler {
 
         val calendar = getNextAlarmTime(alarm)
         val triggerTime = calendar.timeInMillis
-        val currentTime = System.currentTimeMillis()
 
-        // Показываем Toast с временем до срабатывания (сокращенный вариант)
-        showTimeToAlarmToast(context, currentTime, triggerTime)
+        // Сохраняем время следующего срабатывания
+        CoroutineScope(Dispatchers.IO).launch {
+            val app = context.applicationContext as AlarmApplication
+            app.alarmRepository.updateAlarm(alarm.copy(nextTriggerTime = triggerTime))
+        }
+
+        val currentTime = System.currentTimeMillis()
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -91,33 +95,43 @@ object AlarmScheduler {
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
             }
+
+            // Показываем Toast на главном потоке
+            Handler(Looper.getMainLooper()).post {
+                showTimeToAlarmToast(context, currentTime, triggerTime)
+            }
+
         } catch (e: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
         }
     }
 
-    private fun showTimeToAlarmToast(context: Context, currentTime: Long, triggerTime: Long) {
-        val diff = triggerTime - currentTime
+    suspend fun checkMissedAlarms(context: Context, repository: AlarmRepository) {
+        val currentTime = System.currentTimeMillis()
+        val app = context.applicationContext as AlarmApplication
 
-        val days = TimeUnit.MILLISECONDS.toDays(diff)
-        val hours = TimeUnit.MILLISECONDS.toHours(diff) % 24
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
+        val missedAlarms = app.alarmRepository.getMissedAlarms(currentTime)
 
-        // Используем сокращенные обозначения, чтобы не склонять
-        val parts = mutableListOf<String>()
-        if (days > 0) parts.add("${days}д")
-        if (hours > 0) parts.add("${hours}ч")
-        if (minutes > 0) parts.add("${minutes}мин")
-        if (parts.isEmpty() && seconds > 0) parts.add("${seconds}сек")
+        if (missedAlarms.isNotEmpty()) {
+            // Обрабатываем каждый пропущенный будильник
+            missedAlarms.forEach { alarm ->
+                if (alarm.daysOfWeek.isEmpty()) {
+                    // Неповторяющийся: отключаем
+                    app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false, nextTriggerTime = 0L))
+                    cancelAlarm(context, alarm.id)
+                } else {
+                    // Повторяющийся: перепланируем на следующее время
+                    scheduleAlarm(context, alarm)
+                }
+            }
 
-        val message = if (parts.isNotEmpty()) {
-            "Будильник сработает через ${parts.joinToString(" ")}"
-        } else {
-            "Будильник сработает через несколько секунд"
+            // Запускаем активность, чтобы показать пользователю
+            // Только если нет других активных будильников
+            if (!AlarmActivity.isAlarmActive()) {
+                val alarmIds = missedAlarms.map { it.id }.toLongArray()
+                AlarmActivity.startAlarm(context, alarmIds)
+            }
         }
-
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
     fun cancelAlarm(context: Context, alarmId: Long) {
@@ -136,32 +150,74 @@ object AlarmScheduler {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
+
+        // Обнуляем время следующего срабатывания в базе
+        CoroutineScope(Dispatchers.IO).launch {
+            val app = context.applicationContext as AlarmApplication
+            val alarm = app.alarmRepository.getAlarmById(alarmId)
+            alarm?.let {
+                app.alarmRepository.updateAlarm(it.copy(nextTriggerTime = 0L))
+            }
+        }
     }
 
     private fun getNextAlarmTime(alarm: Alarm): Calendar {
+        val now = Calendar.getInstance()
+        val currentTime = now.timeInMillis
+        val today = getDayOfWeekInOurSystem(now.get(Calendar.DAY_OF_WEEK))
+        val currentHour = now.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = now.get(Calendar.MINUTE)
+
         val calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
             set(Calendar.HOUR_OF_DAY, alarm.hour)
             set(Calendar.MINUTE, alarm.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
 
-        if (calendar.timeInMillis <= System.currentTimeMillis()) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        if (alarm.daysOfWeek.isEmpty()) {
+            // Неповторяющийся будильник
+            if (calendar.timeInMillis <= currentTime) {
+                calendar.add(Calendar.DAY_OF_YEAR, 1)
+            }
+            return calendar
         }
 
-        if (alarm.daysOfWeek.isNotEmpty()) {
-            val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
-            val daysUntilNext = findNextDay(alarm.daysOfWeek, today)
-            if (daysUntilNext > 0) calendar.add(Calendar.DAY_OF_YEAR, daysUntilNext)
+        // Повторяющийся будильник
+        val sortedDays = alarm.daysOfWeek.sorted()
+
+        // Проверяем, подходит ли сегодняшний день
+        if (sortedDays.contains(today)) {
+            // Если время сегодня еще не наступило
+            if (calendar.timeInMillis > currentTime) {
+                return calendar
+            }
         }
 
+        // Ищем следующий подходящий день
+        for (i in 1..7) { // Проверяем следующие 7 дней
+            val testCalendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, alarm.hour)
+                set(Calendar.MINUTE, alarm.minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                add(Calendar.DAY_OF_YEAR, i)
+            }
+
+            val testDay = getDayOfWeekInOurSystem(testCalendar.get(Calendar.DAY_OF_WEEK))
+
+            if (sortedDays.contains(testDay)) {
+                return testCalendar
+            }
+        }
+
+        // Если ничего не нашли (невозможно), возвращаем завтра
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
         return calendar
     }
 
-    private fun findNextDay(alarmDays: List<Int>, currentAndroidDay: Int): Int {
-        val currentDayInOurSystem = when (currentAndroidDay) {
+    private fun getDayOfWeekInOurSystem(androidDayOfWeek: Int): Int {
+        return when (androidDayOfWeek) {
             Calendar.SUNDAY -> 7
             Calendar.MONDAY -> 1
             Calendar.TUESDAY -> 2
@@ -171,11 +227,31 @@ object AlarmScheduler {
             Calendar.SATURDAY -> 6
             else -> 1
         }
+    }
 
-        val sortedDays = alarmDays.sorted()
-        for (day in sortedDays) {
-            if (day > currentDayInOurSystem) return day - currentDayInOurSystem
+    private fun showTimeToAlarmToast(context: Context, currentTime: Long, triggerTime: Long) {
+        val diff = triggerTime - currentTime
+
+        val days = TimeUnit.MILLISECONDS.toDays(diff)
+        val hours = TimeUnit.MILLISECONDS.toHours(diff) % 24
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
+
+        val parts = mutableListOf<String>()
+        if (days > 0) parts.add("${days}д")
+        if (hours > 0) parts.add("${hours}ч")
+        if (minutes > 0) parts.add("${minutes}мин")
+
+        if (parts.isEmpty() && seconds > 0) {
+            parts.add("${seconds}сек")
         }
-        return (sortedDays.first() + 7) - currentDayInOurSystem
+
+        val message = if (parts.isNotEmpty()) {
+            "Будильник сработает через ${parts.joinToString(" ")}"
+        } else {
+            "Будильник сработает через несколько секунд"
+        }
+
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 }

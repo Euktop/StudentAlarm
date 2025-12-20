@@ -9,7 +9,10 @@ import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
+            intent.action == Intent.ACTION_REBOOT ||
+            intent.action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
+
             CoroutineScope(Dispatchers.IO).launch {
                 (context.applicationContext as? AlarmApplication)?.let { app ->
                     AlarmScheduler.rescheduleAllAlarms(context, app.alarmRepository)
