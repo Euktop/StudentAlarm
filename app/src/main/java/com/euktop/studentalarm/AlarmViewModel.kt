@@ -15,12 +15,14 @@ class AlarmViewModel(private val repository: AlarmRepository, private val contex
     fun insertAlarm(alarm: Alarm) = viewModelScope.launch {
         val id = repository.insertAlarm(alarm)
         val insertedAlarm = alarm.copy(id = id)
-        AlarmScheduler.scheduleAlarm(context, insertedAlarm)
+        // Показываем Toast ТОЛЬКО при ручном создании
+        AlarmScheduler.scheduleAlarm(context, insertedAlarm, showToast = true)
     }
 
     fun updateAlarm(alarm: Alarm) = viewModelScope.launch {
         repository.updateAlarm(alarm)
-        AlarmScheduler.scheduleAlarm(context, alarm)
+        // Показываем Toast ТОЛЬКО при ручном изменении
+        AlarmScheduler.scheduleAlarm(context, alarm, showToast = true)
     }
 
     fun deleteAlarm(alarm: Alarm) = viewModelScope.launch {

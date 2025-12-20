@@ -1,64 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Разрешения для будильников -->
+    <!-- Для Android 12+ -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Для Android 6.0-11 -->
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Разрешение для отображения поверх других окон (для активности будильника) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Разрешение для уведомлений (Android 13+) -->
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
+        android:maxSdkVersion="32" />
+
+    <!-- Разрешение на включение экрана -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Разрешения для работы приложения после перезагрузки -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Для Android 8.0+ нужен канал уведомлений -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Для Android 10+ чтобы показывать поверх блокировки экрана -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:name=".AlarmApplication"
-        android:allowBackup="false"
-        android:fullBackupContent="false"
-        android:theme="@style/Theme.StudentAlarm">
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.StudentAlarm"
+        tools:targetApi="31">
 
+        <!-- Главная активность -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Для Android 12+ Predictive Back Gesture -->
+            <meta-data
+                android:name="android.app.enable_on_back_invoked_callback"
+                android:value="true" />
         </activity>
 
+        <!-- Активность для показа будильника (полноэкранная) -->
         <activity
             android:name=".AlarmActivity"
             android:exported="false"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
-            android:theme="@style/Theme.StudentAlarm.FullScreen" />
+            android:theme="@style/Theme.StudentAlarm.FullScreen"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait">
+            <!-- Для Android 12+ Predictive Back Gesture -->
+            <meta-data
+                android:name="android.app.enable_on_back_invoked_callback"
+                android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
+        <!-- Broadcast Receiver для получения события срабатывания будильника -->
         <receiver
             android:name=".AlarmReceiver"
             android:enabled="true"
-            android:exported="true"
-        android:permission="android.permission.SEND_SMS">
-    </receiver>
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.REBOOT" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
 
+        <!-- Broadcast Receiver для перезагрузки будильников после перезагрузки устройства -->
         <receiver
             android:name=".BootReceiver"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.REBOOT" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".TimeChangeReceiver"
+
+        <!-- Broadcast Receiver для изменений времени/даты -->
+        <receiver
+            android:name=".TimeChangeReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.DATE_CHANGED" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Сервис для проверки пропущенных будильников -->
+        <service
+            android:name=".AlarmCheckService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Метаданные для навигации -->
+        <meta-data
+            android:name="android.app.lib_name"
+            android:value="" />
+        <meta-data
+            android:name="androidx.lifecycle.BundledLifecycleRegistry"
+            android:value="true" />
+
     </application>
+
 </manifest>

@@ -20,8 +20,8 @@ class AlarmReceiver : BroadcastReceiver() {
                     // Для неповторяющихся - помечаем как неактивные
                     app.alarmRepository.updateAlarm(it.copy(isEnabled = false, nextTriggerTime = 0L))
                 } else {
-                    // Для повторяющихся - планируем следующее срабатывание
-                    AlarmScheduler.scheduleAlarm(context, it)
+                    // Для повторяющихся - планируем следующее срабатывание (без Toast)
+                    AlarmScheduler.scheduleAlarm(context, it, showToast = false)
                 }
             }
         }

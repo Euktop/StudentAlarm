@@ -29,12 +29,13 @@ object AlarmScheduler {
         val alarms = alarmsFlow.first()
         alarms.forEach { alarm ->
             if (alarm.isEnabled) {
-                scheduleAlarm(context, alarm)
+                scheduleAlarm(context, alarm, showToast = false) // Не показывать Toast
             }
         }
     }
 
-    fun scheduleAlarm(context: Context, alarm: Alarm) {
+    // Добавляем параметр showToast, по умолчанию false
+    fun scheduleAlarm(context: Context, alarm: Alarm, showToast: Boolean = false) {
         if (!alarm.isEnabled) {
             cancelAlarm(context, alarm.id)
             return
@@ -96,9 +97,11 @@ object AlarmScheduler {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
             }
 
-            // Показываем Toast на главном потоке
-            Handler(Looper.getMainLooper()).post {
-                showTimeToAlarmToast(context, currentTime, triggerTime)
+            // Показываем Toast ТОЛЬКО если явно запрошено (при ручном создании/изменении)
+            if (showToast) {
+                Handler(Looper.getMainLooper()).post {
+                    showTimeToAlarmToast(context, currentTime, triggerTime)
+                }
             }
 
         } catch (e: SecurityException) {
@@ -120,13 +123,12 @@ object AlarmScheduler {
                     app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false, nextTriggerTime = 0L))
                     cancelAlarm(context, alarm.id)
                 } else {
-                    // Повторяющийся: перепланируем на следующее время
-                    scheduleAlarm(context, alarm)
+                    // Повторяющийся: перепланируем на следующее время (без Toast)
+                    scheduleAlarm(context, alarm, showToast = false)
                 }
             }
 
             // Запускаем активность, чтобы показать пользователю
-            // Только если нет других активных будильников
             if (!AlarmActivity.isAlarmActive()) {
                 val alarmIds = missedAlarms.map { it.id }.toLongArray()
                 AlarmActivity.startAlarm(context, alarmIds)

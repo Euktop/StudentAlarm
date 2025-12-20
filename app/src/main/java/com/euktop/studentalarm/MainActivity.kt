@@ -44,9 +44,27 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Проверяем разрешения
-        checkPermissionsOnStartup()
+        // Сначала инициализируем UI
+        setupUI()
 
+        // Откладываем тяжелые операции для оптимизации запуска
+        lifecycleScope.launch {
+            // Даем время UI отрисоваться
+            kotlinx.coroutines.delay(100)
+
+            // Проверяем разрешения (не блокируя UI)
+            checkPermissionsOnStartup()
+
+            // Проверяем пропущенные будильники с задержкой
+            kotlinx.coroutines.delay(1000)
+            if (!hasCheckedMissedAlarms) {
+                checkMissedAlarmsOnStart()
+                hasCheckedMissedAlarms = true
+            }
+        }
+    }
+
+    private fun setupUI() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -137,33 +155,33 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // Проверяем пропущенные будильники только если флаг не установлен
-        if (!hasCheckedMissedAlarms) {
-            checkMissedAlarmsOnStart()
-            hasCheckedMissedAlarms = true
-        }
-
+        // Проверяем разрешения при возвращении в приложение
         checkPermissionsAndDisableAlarms()
     }
 
     private fun checkMissedAlarmsOnStart() {
         lifecycleScope.launch {
-            // Даем время приложению полностью запуститься
-            kotlinx.coroutines.delay(2000)
-
-            val app = application as AlarmApplication
-            AlarmScheduler.checkMissedAlarms(this@MainActivity, app.alarmRepository)
+            try {
+                val app = application as AlarmApplication
+                AlarmScheduler.checkMissedAlarms(this@MainActivity, app.alarmRepository)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     private fun checkPermissionsOnStartup() {
-        if (!PermissionManager.hasAllAlarmPermissions(this)) {
-            PermissionManager.showAllPermissionsDialog(this)
-        }
+        lifecycleScope.launch {
+            if (!PermissionManager.hasAllAlarmPermissions(this@MainActivity)) {
+                runOnUiThread {
+                    PermissionManager.showAllPermissionsDialog(this@MainActivity)
+                }
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!PermissionManager.hasNotificationPermission(this)) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (!PermissionManager.hasNotificationPermission(this@MainActivity)) {
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
             }
         }
     }
@@ -176,31 +194,35 @@ class MainActivity : AppCompatActivity() {
 
     private fun disableAllAlarms() {
         lifecycleScope.launch {
-            val app = application as AlarmApplication
-            val alarms = app.alarmRepository.getAllAlarms().first()
+            try {
+                val app = application as AlarmApplication
+                val alarms = app.alarmRepository.getAllAlarms().first()
 
-            if (alarms.isEmpty()) {
-                return@launch
-            }
-
-            var disabledCount = 0
-
-            alarms.forEach { alarm ->
-                if (alarm.isEnabled) {
-                    app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false, nextTriggerTime = 0L))
-                    AlarmScheduler.cancelAlarm(this@MainActivity, alarm.id)
-                    disabledCount++
+                if (alarms.isEmpty()) {
+                    return@launch
                 }
-            }
 
-            if (disabledCount > 0) {
-                runOnUiThread {
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Все будильники отключены из-за отсутствия необходимых разрешений",
-                        Toast.LENGTH_LONG
-                    ).show()
+                var disabledCount = 0
+
+                alarms.forEach { alarm ->
+                    if (alarm.isEnabled) {
+                        app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false, nextTriggerTime = 0L))
+                        AlarmScheduler.cancelAlarm(this@MainActivity, alarm.id)
+                        disabledCount++
+                    }
                 }
+
+                if (disabledCount > 0) {
+                    runOnUiThread {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Все будильники отключены из-за отсутствия необходимых разрешений",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
