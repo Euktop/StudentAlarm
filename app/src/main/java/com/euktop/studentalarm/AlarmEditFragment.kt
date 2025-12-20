@@ -24,7 +24,6 @@ class AlarmEditFragment : Fragment() {
     private var isDaysDialogShowing = false
     private var isDescriptionDialogShowing = false
 
-    val MAX_LENGHT_DESCRIPTION = 100
     private var _binding: FragmentAlarmEditBinding? = null
     private val binding get() = _binding!!
 
@@ -242,28 +241,19 @@ class AlarmEditFragment : Fragment() {
         val btnCancel = dialogView.findViewById<Button>(R.id.btnDescriptionDialogCancel)
 
         editText.setText(description)
-        updateCharCount(editText, tvCharCount)
+
+        // Сразу обновляем счетчик символов при открытии диалога
+        val currentLength = description.length
+        tvCharCount.text = "$currentLength"
 
         editText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                updateCharCount(editText, tvCharCount)
-
-                val currentText = s?.toString() ?: ""
-                if (currentText.length > MAX_LENGHT_DESCRIPTION) {
-                    editText.setText(currentText.substring(0, MAX_LENGHT_DESCRIPTION))
-                    editText.setSelection(MAX_LENGHT_DESCRIPTION)
-
-                    if (count > 0) {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.MaximumDescriptionLength).replace("{x}",MAX_LENGHT_DESCRIPTION.toString()),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
+                // Обновляем счетчик при каждом изменении
+                val currentLength = s?.length ?: 0
+                tvCharCount.text = "$currentLength"
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -291,11 +281,6 @@ class AlarmEditFragment : Fragment() {
         }
 
         dialog.show()
-    }
-
-    private fun updateCharCount(editText: EditText, tvCharCount: TextView) {
-        val currentLength = editText.text.length
-        tvCharCount.text = "$currentLength/$MAX_LENGHT_DESCRIPTION"
     }
 
     private fun updateDescriptionDisplay() {

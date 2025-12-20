@@ -41,7 +41,6 @@
     <string name="ChangeDescription">Изменить описание</string>
     <string name="SaveError">Ошибка сохранения</string>
     <string name="IncorrectTime">Некорректное время</string>
-    <string name="MaximumDescriptionLength">Максимальная длина описания составляет {x} символов</string>
     <string name="DescriptionAlarm">Описание будильника</string>
     <string name="enter_a_description_of_the_alarm_clock">Введите описание будильника</string>
 

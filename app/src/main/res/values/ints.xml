@@ -2,5 +2,4 @@
 <resources>
     <integer name="anim_duration">300</integer>
     <integer name="anim_duration_short">150</integer>
-    <integer name="max_lenght_description">100</integer>
 </resources>

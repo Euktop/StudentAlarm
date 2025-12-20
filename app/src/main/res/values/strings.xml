@@ -42,7 +42,6 @@
     <string name="ChangeDescription">Change the description</string>
     <string name="SaveError">Saving error</string>
     <string name="IncorrectTime">Incorrect time</string>
-    <string name="MaximumDescriptionLength">The maximum description length is {x} characters</string>
     <string name="DescriptionAlarm">Alarm Clock Description</string>
     <string name="enter_a_description_of_the_alarm_clock">Enter a description of the alarm clock</string>
 
