@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.core.splashscreen)
     kapt(libs.androidx.room.compiler)
 
     // Lifecycle

@@ -1,6 +1,7 @@
 package com.euktop.studentalarm
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -60,7 +61,32 @@ class AlarmRecyclerAdapter(
         if (!isSelectionMode) {
             holder.isEnabledAlarmSwitch.setOnCheckedChangeListener(null)
             holder.isEnabledAlarmSwitch.isChecked = alarm.isEnabled
+
+            // Проверяем все необходимые разрешения для будильника
+            val hasAllPermissions = PermissionManager.hasAllAlarmPermissions(context)
+
+            if (!hasAllPermissions) {
+                // Блокируем переключатель, если нет всех разрешений
+                holder.isEnabledAlarmSwitch.isEnabled = false
+                holder.isEnabledAlarmSwitch.alpha = 0.5f
+
+                // Принудительно отключаем будильник в UI, если он включен
+                if (alarm.isEnabled) {
+                    holder.isEnabledAlarmSwitch.isChecked = false
+                }
+            } else {
+                holder.isEnabledAlarmSwitch.isEnabled = true
+                holder.isEnabledAlarmSwitch.alpha = 1f
+            }
+
             holder.isEnabledAlarmSwitch.setOnCheckedChangeListener { _, isChecked ->
+                // Проверяем разрешения перед включением будильника
+                if (isChecked && !PermissionManager.hasAllAlarmPermissions(context)) {
+                    // Разрешений нет, не даем включить
+                    holder.isEnabledAlarmSwitch.isChecked = false
+                    showPermissionsRequiredDialog()
+                    return@setOnCheckedChangeListener
+                }
                 onSwitchChanged?.invoke(alarm, isChecked)
             }
         }
@@ -166,4 +192,18 @@ class AlarmRecyclerAdapter(
 
     fun isSelectionMode(): Boolean = isSelectionMode
     fun isAllSelected(): Boolean = selectedIds.size == alarms.size
+
+    // ==================== PERMISSION DIALOG ====================
+    private fun showPermissionsRequiredDialog() {
+        if (context is Activity) {
+            val activity = context as Activity
+            if (activity is MainActivity) {
+                activity.checkAlarmPermissionsAndExecute {
+                    // Callback после показа диалога
+                }
+            } else {
+                PermissionManager.showAllPermissionsDialog(activity)
+            }
+        }
+    }
 }

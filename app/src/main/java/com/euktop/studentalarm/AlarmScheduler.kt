@@ -15,7 +15,13 @@ import java.util.concurrent.TimeUnit
 object AlarmScheduler {
     const val ALARM_ID_EXTRA = "alarm_id"
     const val ALARM_DESCRIPTION_EXTRA = "alarm_description"
+
     suspend fun rescheduleAllAlarms(context: Context, repository: AlarmRepository) {
+        // Проверяем разрешения перед планированием
+        if (!PermissionManager.hasAllAlarmPermissions(context)) {
+            return
+        }
+
         val alarmsFlow = repository.getAllAlarms()
         val alarms = alarmsFlow.first()
         alarms.forEach { alarm ->
@@ -24,18 +30,24 @@ object AlarmScheduler {
             }
         }
     }
+
     fun scheduleAlarm(context: Context, alarm: Alarm) {
         if (!alarm.isEnabled) {
             cancelAlarm(context, alarm.id)
             return
         }
 
+        // Проверяем все необходимые разрешения
+        if (!PermissionManager.hasAllAlarmPermissions(context)) {
+            return
+        }
+
+        // Для Android 12+ проверяем разрешение на установку точных будильников
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (!alarmManager.canScheduleExactAlarms()) {
-                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                intent.data = android.net.Uri.parse("package:${context.packageName}")
-                context.startActivity(intent)
+                // Запрашиваем разрешение через настройки
+                PermissionManager.requestScheduleExactAlarmPermission(context as android.app.Activity)
                 return
             }
         }
@@ -58,7 +70,7 @@ object AlarmScheduler {
         val triggerTime = calendar.timeInMillis
         val currentTime = System.currentTimeMillis()
 
-        // Показываем Toast с временем до срабатывания
+        // Показываем Toast с временем до срабатывания (сокращенный вариант)
         showTimeToAlarmToast(context, currentTime, triggerTime)
 
         try {
@@ -90,30 +102,22 @@ object AlarmScheduler {
         val days = TimeUnit.MILLISECONDS.toDays(diff)
         val hours = TimeUnit.MILLISECONDS.toHours(diff) % 24
         val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
 
+        // Используем сокращенные обозначения, чтобы не склонять
         val parts = mutableListOf<String>()
-        if (days > 0) parts.add("$days ${pluralize(days, "день", "дня", "дней")}")
-        if (hours > 0) parts.add("$hours ${pluralize(hours, "час", "часа", "часов")}")
-        if (minutes > 0) parts.add("$minutes ${pluralize(minutes, "минута", "минуты", "минут")}")
+        if (days > 0) parts.add("${days}д")
+        if (hours > 0) parts.add("${hours}ч")
+        if (minutes > 0) parts.add("${minutes}мин")
+        if (parts.isEmpty() && seconds > 0) parts.add("${seconds}сек")
 
-        if (parts.isEmpty()) {
-            val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
-            parts.add("$seconds ${pluralize(seconds, "секунда", "секунды", "секунд")}")
+        val message = if (parts.isNotEmpty()) {
+            "Будильник сработает через ${parts.joinToString(" ")}"
+        } else {
+            "Будильник сработает через несколько секунд"
         }
 
-        val message = "Будильник сработает через ${parts.joinToString(", ")}."
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun pluralize(n: Long, one: String, few: String, many: String): String {
-        val n10 = n % 10
-        val n100 = n % 100
-
-        return when {
-            n10 == 1L && n100 != 11L -> one
-            n10 in 2..4 && n100 !in 12..14 -> few
-            else -> many
-        }
     }
 
     fun cancelAlarm(context: Context, alarmId: Long) {

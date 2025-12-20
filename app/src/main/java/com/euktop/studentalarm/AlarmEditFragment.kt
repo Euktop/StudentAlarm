@@ -20,6 +20,9 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class AlarmEditFragment : Fragment() {
+    private var isTimePickerShowing = false
+    private var isDaysDialogShowing = false
+    private var isDescriptionDialogShowing = false
 
     val MAX_LENGHT_DESCRIPTION = 100
     private var _binding: FragmentAlarmEditBinding? = null
@@ -87,7 +90,6 @@ class AlarmEditFragment : Fragment() {
                     updateDaysDisplay()
                     updateDescriptionDisplay()
                 } ?: run {
-                    Toast.makeText(requireContext(), context?.getString(R.string.AlarmNotFound), Toast.LENGTH_SHORT).show()
                     findNavController().popBackStack()
                 }
             }
@@ -103,6 +105,10 @@ class AlarmEditFragment : Fragment() {
     // ==================== MATERIAL TIME PICKER ====================
     @SuppressLint("SetTextI18n")
     private fun showMaterialTimePicker() {
+        if (isTimePickerShowing) return
+
+        isTimePickerShowing = true
+
         val picker = MaterialTimePicker.Builder()
             .setTimeFormat(TimeFormat.CLOCK_24H)
             .setHour(selectedHour)
@@ -117,6 +123,15 @@ class AlarmEditFragment : Fragment() {
             selectedHour = picker.hour
             selectedMinute = picker.minute
             updateTimeDisplay()
+            isTimePickerShowing = false
+        }
+
+        picker.addOnNegativeButtonClickListener {
+            isTimePickerShowing = false
+        }
+
+        picker.addOnDismissListener {
+            isTimePickerShowing = false
         }
 
         picker.show(childFragmentManager, "time_picker")
@@ -137,6 +152,10 @@ class AlarmEditFragment : Fragment() {
 
     // ==================== DAYS SELECTION DIALOG ====================
     private fun showDaysDialog() {
+        if (isDaysDialogShowing) return
+
+        isDaysDialogShowing = true
+
         val daysArray = arrayOf(
             getString(R.string.DayOfWeekMonday),
             getString(R.string.DayOfWeekTuesday),
@@ -147,8 +166,11 @@ class AlarmEditFragment : Fragment() {
             getString(R.string.DayOfWeekSunday)
         )
 
+        // Создаем временную копию выбранных дней для работы внутри диалога
+        val tempSelectedDays = selectedDaysOfWeek.toMutableList()
+
         val checkedItems = BooleanArray(7) { index ->
-            selectedDaysOfWeek.contains(index + 1)
+            tempSelectedDays.contains(index + 1)
         }
 
         AlertDialog.Builder(requireContext())
@@ -156,17 +178,27 @@ class AlarmEditFragment : Fragment() {
             .setMultiChoiceItems(daysArray, checkedItems) { _, which, isChecked ->
                 val dayNumber = which + 1
                 if (isChecked) {
-                    if (!selectedDaysOfWeek.contains(dayNumber)) {
-                        selectedDaysOfWeek.add(dayNumber)
+                    if (!tempSelectedDays.contains(dayNumber)) {
+                        tempSelectedDays.add(dayNumber)
                     }
                 } else {
-                    selectedDaysOfWeek.remove(dayNumber)
+                    tempSelectedDays.remove(dayNumber)
                 }
             }
             .setPositiveButton(getString(R.string.OK)) { _, _ ->
+                // Применяем изменения только при нажатии OK
+                selectedDaysOfWeek.clear()
+                selectedDaysOfWeek.addAll(tempSelectedDays)
                 updateDaysDisplay()
+                isDaysDialogShowing = false
             }
-            .setNegativeButton(getString(R.string.Cancel), null)
+            .setNegativeButton(getString(R.string.Cancel)) { _, _ ->
+                // При отмене ничего не делаем - tempSelectedDays игнорируется
+                isDaysDialogShowing = false
+            }
+            .setOnDismissListener {
+                isDaysDialogShowing = false
+            }
             .show()
     }
 
@@ -197,6 +229,10 @@ class AlarmEditFragment : Fragment() {
 
     // ==================== DESCRIPTION DIALOG ====================
     private fun showDescriptionDialog() {
+        if (isDescriptionDialogShowing) return
+
+        isDescriptionDialogShowing = true
+
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_description, null)
 
@@ -237,16 +273,23 @@ class AlarmEditFragment : Fragment() {
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.DescriptionAlarm))
             .setView(dialogView)
+            .setOnDismissListener {
+                isDescriptionDialogShowing = false
+            }
             .create()
+
         btnOk.setOnClickListener {
             description = editText.text.toString().trim()
             updateDescriptionDisplay()
+            isDescriptionDialogShowing = false
             dialog.dismiss()
         }
 
         btnCancel.setOnClickListener {
+            isDescriptionDialogShowing = false
             dialog.dismiss()
         }
+
         dialog.show()
     }
 
@@ -279,16 +322,40 @@ class AlarmEditFragment : Fragment() {
         }
 
         binding.btnSave.setOnClickListener {
-            saveAlarm()
+            checkPermissionsAndSave()
         }
     }
 
-    // ==================== SAVE ALARM ====================
-    private fun saveAlarm() {
+    // ==================== CHECK PERMISSIONS AND SAVE ====================
+    private fun checkPermissionsAndSave() {
         if (!validateAlarm()) {
             return
         }
 
+        // Проверяем наличие всех необходимых разрешений
+        if (!PermissionManager.hasAllAlarmPermissions(requireContext())) {
+            showPermissionsRequiredDialog()
+            return
+        }
+
+        // Все разрешения есть, сохраняем будильник
+        saveAlarm()
+    }
+
+    private fun showPermissionsRequiredDialog() {
+        val activity = requireActivity() as MainActivity
+        activity.checkAlarmPermissionsAndExecute {
+            // Пользователь перешел в настройки, но мы все равно не сохраняем будильник
+            // Он может создать будильник после возвращения и настройки разрешений
+            Toast.makeText(
+                requireContext(),
+                "Настройте разрешения и попробуйте снова",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun saveAlarm() {
         val alarm = Alarm(
             id = alarmId,
             hour = selectedHour,
@@ -307,7 +374,7 @@ class AlarmEditFragment : Fragment() {
                 }
                 findNavController().popBackStack()
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), getString(R.string.SaveError), Toast.LENGTH_SHORT).show()
+                // Не показываем сообщение об ошибке
             }
         }
     }
@@ -322,6 +389,11 @@ class AlarmEditFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+
+        isTimePickerShowing = false
+        isDaysDialogShowing = false
+        isDescriptionDialogShowing = false
+
         _binding = null
     }
 }
