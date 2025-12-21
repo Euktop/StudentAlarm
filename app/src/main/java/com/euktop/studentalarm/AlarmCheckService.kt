@@ -23,7 +23,7 @@ class AlarmCheckService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         CoroutineScope(Dispatchers.IO).launch {
             val app = applicationContext as AlarmApplication
-            AlarmScheduler.checkMissedAlarms(applicationContext, app.alarmRepository)
+            AlarmScheduler.checkMissedAlarms(applicationContext)
         }
 
         return START_STICKY

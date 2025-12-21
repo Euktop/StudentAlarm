@@ -70,7 +70,7 @@ class AlarmActivity : AppCompatActivity() {
                 )
             }
 
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
+            val notificationManager = context.getSystemService(NOTIFICATION_SERVICE)
                     as android.app.NotificationManager
 
             val channel = android.app.NotificationChannel(

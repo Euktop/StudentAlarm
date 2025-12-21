@@ -173,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val app = application as AlarmApplication
-                AlarmScheduler.checkMissedAlarms(this@MainActivity, app.alarmRepository)
+                AlarmScheduler.checkMissedAlarms(this@MainActivity)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -21,7 +21,7 @@ class TimeChangeReceiver : BroadcastReceiver() {
                 CoroutineScope(Dispatchers.IO).launch {
                     (context.applicationContext as? AlarmApplication)?.let { app ->
                         AlarmScheduler.rescheduleAllAlarms(context, app.alarmRepository)
-                        AlarmScheduler.checkMissedAlarms(context, app.alarmRepository)
+                        AlarmScheduler.checkMissedAlarms(context)
                     }
                 }
             }

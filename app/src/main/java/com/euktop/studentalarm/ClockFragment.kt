@@ -84,11 +84,6 @@ class ClockFragment : Fragment() {
         }
     }
 
-    companion object {
-        @JvmStatic
-        fun newInstance() = ClockFragment()
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

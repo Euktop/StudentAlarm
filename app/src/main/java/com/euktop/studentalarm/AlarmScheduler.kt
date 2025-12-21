@@ -105,7 +105,7 @@ object AlarmScheduler {
         }
     }
 
-    suspend fun checkMissedAlarms(context: Context, repository: AlarmRepository) {
+    suspend fun checkMissedAlarms(context: Context) {
         val currentTime = System.currentTimeMillis()
         val app = context.applicationContext as AlarmApplication
 
