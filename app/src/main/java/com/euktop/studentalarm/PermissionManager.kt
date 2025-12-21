@@ -19,7 +19,6 @@ object PermissionManager {
     const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
     const val SCHEDULE_EXACT_ALARM_REQUEST_CODE = 1003
 
-    // Проверка разрешения на показ поверх окон
     fun hasOverlayPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Settings.canDrawOverlays(context)
@@ -28,8 +27,8 @@ object PermissionManager {
         }
     }
 
-    // Проверка разрешения на уведомления (для API 33+)
     fun hasNotificationPermission(context: Context): Boolean {
+        /*
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
@@ -38,9 +37,10 @@ object PermissionManager {
         } else {
             true
         }
+        */
+        return true
     }
 
-    // Проверка разрешения на установку точных будильников (для Android 12+)
     fun canScheduleExactAlarms(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
@@ -50,12 +50,10 @@ object PermissionManager {
         }
     }
 
-    // Проверка всех необходимых разрешений для работы будильника
     fun hasAllAlarmPermissions(context: Context): Boolean {
         return hasOverlayPermission(context) && canScheduleExactAlarms(context)
     }
 
-    // Запрос разрешения на показ поверх окон
     fun requestOverlayPermission(activity: Activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
@@ -70,7 +68,6 @@ object PermissionManager {
         }
     }
 
-    // Запрос разрешения на установку точных будильников
     fun requestScheduleExactAlarmPermission(activity: Activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
@@ -83,8 +80,8 @@ object PermissionManager {
         }
     }
 
-    // Запрос разрешения на уведомления
     fun requestNotificationPermission(activity: Activity) {
+        /*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                 activity,
@@ -92,54 +89,52 @@ object PermissionManager {
                 NOTIFICATION_PERMISSION_REQUEST_CODE
             )
         }
+        */
     }
 
-    // Показать диалог для запроса всех необходимых разрешений
     fun showAllPermissionsDialog(activity: Activity, onGranted: () -> Unit = {}) {
         val missingPermissions = mutableListOf<String>()
 
         if (!hasOverlayPermission(activity)) {
-            missingPermissions.add("отображение поверх окон")
+            missingPermissions.add(activity.getString(R.string.permission_overlay))
         }
 
         if (!canScheduleExactAlarms(activity)) {
-            missingPermissions.add("установка точных будильников")
+            missingPermissions.add(activity.getString(R.string.permission_exact_alarm))
         }
 
+        /*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (!hasNotificationPermission(activity)) {
-                missingPermissions.add("уведомления")
+                missingPermissions.add(activity.getString(R.string.permission_notification))
             }
         }
+        */
 
         if (missingPermissions.isEmpty()) {
             onGranted()
             return
         }
 
-        val permissionsText = missingPermissions.joinToString(", ")
+        val permissionsText = missingPermissions.joinToString("\n• ")
 
         AlertDialog.Builder(activity)
-            .setTitle("Требуются разрешения")
-            .setMessage("Для работы будильника необходимы разрешения:\n\n• ${missingPermissions.joinToString("\n• ")}\n\n" +
-                    "Без этих разрешений будильник не сможет работать корректно.")
-            .setPositiveButton("Настройки") { _, _ ->
-                // Запрашиваем первое недостающее разрешение
+            .setTitle(activity.getString(R.string.permissions_required))
+            .setMessage(activity.getString(R.string.permissions_dialog_message, permissionsText))
+            .setPositiveButton(activity.getString(R.string.settings)) { _, _ ->
                 if (!hasOverlayPermission(activity)) {
                     requestOverlayPermission(activity)
                 } else if (!canScheduleExactAlarms(activity)) {
                     requestScheduleExactAlarmPermission(activity)
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission(activity)) {
-                    requestNotificationPermission(activity)
                 }
 
                 onGranted()
             }
-            .setNegativeButton("Отмена") { dialog, _ ->
+            .setNegativeButton(activity.getString(R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
                 Toast.makeText(
                     activity,
-                    "Будильник не будет работать без необходимых разрешений",
+                    activity.getString(R.string.alarm_disabled_no_permission),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -147,12 +142,11 @@ object PermissionManager {
             .show()
     }
 
-    // Показать диалог для конкретного разрешения
     fun showSpecificPermissionDialog(activity: Activity, permissionType: String, message: String, onGranted: () -> Unit = {}) {
         AlertDialog.Builder(activity)
-            .setTitle("Требуется разрешение")
+            .setTitle(activity.getString(R.string.permission_required))
             .setMessage(message)
-            .setPositiveButton("Настройки") { _, _ ->
+            .setPositiveButton(activity.getString(R.string.settings)) { _, _ ->
                 when (permissionType) {
                     "overlay" -> requestOverlayPermission(activity)
                     "exact_alarm" -> requestScheduleExactAlarmPermission(activity)
@@ -160,11 +154,11 @@ object PermissionManager {
                 }
                 onGranted()
             }
-            .setNegativeButton("Отмена") { dialog, _ ->
+            .setNegativeButton(activity.getString(R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
                 Toast.makeText(
                     activity,
-                    "Будильник не будет работать без этого разрешения",
+                    activity.getString(R.string.alarm_disabled_no_permission),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -172,7 +166,6 @@ object PermissionManager {
             .show()
     }
 
-    // Проверка и запрос разрешений перед действием
     fun checkAllPermissionsBeforeAction(activity: Activity, action: () -> Unit) {
         if (!hasAllAlarmPermissions(activity)) {
             showAllPermissionsDialog(activity, action)
@@ -181,7 +174,6 @@ object PermissionManager {
         }
     }
 
-    // Открыть настройки приложения
     fun openAppSettings(activity: Activity) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -192,7 +184,7 @@ object PermissionManager {
         } catch (e: Exception) {
             Toast.makeText(
                 activity,
-                "Откройте настройки приложения вручную",
+                activity.getString(R.string.open_app_settings_manually),
                 Toast.LENGTH_LONG
             ).show()
         }

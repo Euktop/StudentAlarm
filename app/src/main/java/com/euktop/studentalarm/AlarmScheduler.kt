@@ -17,9 +17,6 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 object AlarmScheduler {
-    const val ALARM_ID_EXTRA = "alarm_id"
-    const val ALARM_DESCRIPTION_EXTRA = "alarm_description"
-
     suspend fun rescheduleAllAlarms(context: Context, repository: AlarmRepository) {
         if (!PermissionManager.hasAllAlarmPermissions(context)) {
             return
@@ -29,12 +26,11 @@ object AlarmScheduler {
         val alarms = alarmsFlow.first()
         alarms.forEach { alarm ->
             if (alarm.isEnabled) {
-                scheduleAlarm(context, alarm, showToast = false) // Не показывать Toast
+                scheduleAlarm(context, alarm, showToast = false)
             }
         }
     }
 
-    // Добавляем параметр showToast, по умолчанию false
     fun scheduleAlarm(context: Context, alarm: Alarm, showToast: Boolean = false) {
         if (!alarm.isEnabled) {
             cancelAlarm(context, alarm.id)
@@ -70,7 +66,6 @@ object AlarmScheduler {
         val calendar = getNextAlarmTime(alarm)
         val triggerTime = calendar.timeInMillis
 
-        // Сохраняем время следующего срабатывания
         CoroutineScope(Dispatchers.IO).launch {
             val app = context.applicationContext as AlarmApplication
             app.alarmRepository.updateAlarm(alarm.copy(nextTriggerTime = triggerTime))
@@ -97,7 +92,6 @@ object AlarmScheduler {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
             }
 
-            // Показываем Toast ТОЛЬКО если явно запрошено (при ручном создании/изменении)
             if (showToast) {
                 Handler(Looper.getMainLooper()).post {
                     showTimeToAlarmToast(context, currentTime, triggerTime)
@@ -116,19 +110,15 @@ object AlarmScheduler {
         val missedAlarms = app.alarmRepository.getMissedAlarms(currentTime)
 
         if (missedAlarms.isNotEmpty()) {
-            // Обрабатываем каждый пропущенный будильник
             missedAlarms.forEach { alarm ->
                 if (alarm.daysOfWeek.isEmpty()) {
-                    // Неповторяющийся: отключаем
                     app.alarmRepository.updateAlarm(alarm.copy(isEnabled = false, nextTriggerTime = 0L))
                     cancelAlarm(context, alarm.id)
                 } else {
-                    // Повторяющийся: перепланируем на следующее время (без Toast)
                     scheduleAlarm(context, alarm, showToast = false)
                 }
             }
 
-            // Запускаем активность, чтобы показать пользователю
             if (!AlarmActivity.isAlarmActive()) {
                 val alarmIds = missedAlarms.map { it.id }.toLongArray()
                 AlarmActivity.startAlarm(context, alarmIds)
@@ -153,7 +143,6 @@ object AlarmScheduler {
         alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
 
-        // Обнуляем время следующего срабатывания в базе
         CoroutineScope(Dispatchers.IO).launch {
             val app = context.applicationContext as AlarmApplication
             val alarm = app.alarmRepository.getAlarmById(alarmId)
@@ -167,8 +156,6 @@ object AlarmScheduler {
         val now = Calendar.getInstance()
         val currentTime = now.timeInMillis
         val today = getDayOfWeekInOurSystem(now.get(Calendar.DAY_OF_WEEK))
-        val currentHour = now.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = now.get(Calendar.MINUTE)
 
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarm.hour)
@@ -178,26 +165,21 @@ object AlarmScheduler {
         }
 
         if (alarm.daysOfWeek.isEmpty()) {
-            // Неповторяющийся будильник
             if (calendar.timeInMillis <= currentTime) {
                 calendar.add(Calendar.DAY_OF_YEAR, 1)
             }
             return calendar
         }
 
-        // Повторяющийся будильник
         val sortedDays = alarm.daysOfWeek.sorted()
 
-        // Проверяем, подходит ли сегодняшний день
         if (sortedDays.contains(today)) {
-            // Если время сегодня еще не наступило
             if (calendar.timeInMillis > currentTime) {
                 return calendar
             }
         }
 
-        // Ищем следующий подходящий день
-        for (i in 1..7) { // Проверяем следующие 7 дней
+        for (i in 1..7) {
             val testCalendar = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, alarm.hour)
                 set(Calendar.MINUTE, alarm.minute)
@@ -213,20 +195,19 @@ object AlarmScheduler {
             }
         }
 
-        // Если ничего не нашли (невозможно), возвращаем завтра
         calendar.add(Calendar.DAY_OF_YEAR, 1)
         return calendar
     }
 
     private fun getDayOfWeekInOurSystem(androidDayOfWeek: Int): Int {
         return when (androidDayOfWeek) {
-            Calendar.SUNDAY -> 7
             Calendar.MONDAY -> 1
             Calendar.TUESDAY -> 2
             Calendar.WEDNESDAY -> 3
             Calendar.THURSDAY -> 4
             Calendar.FRIDAY -> 5
             Calendar.SATURDAY -> 6
+            Calendar.SUNDAY -> 7
             else -> 1
         }
     }
@@ -240,18 +221,18 @@ object AlarmScheduler {
         val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
 
         val parts = mutableListOf<String>()
-        if (days > 0) parts.add("${days}д")
-        if (hours > 0) parts.add("${hours}ч")
-        if (minutes > 0) parts.add("${minutes}мин")
+        if (days > 0) parts.add("$days${context.getString(R.string.days_short)}")
+        if (hours > 0) parts.add("$hours${context.getString(R.string.hours_short)}")
+        if (minutes > 0) parts.add("$minutes${context.getString(R.string.minutes_short)}")
 
         if (parts.isEmpty() && seconds > 0) {
-            parts.add("${seconds}сек")
+            parts.add("$seconds${context.getString(R.string.seconds_short)}")
         }
 
         val message = if (parts.isNotEmpty()) {
-            "Будильник сработает через ${parts.joinToString(" ")}"
+            context.getString(R.string.alarm_in, parts.joinToString(" "))
         } else {
-            "Будильник сработает через несколько секунд"
+            context.getString(R.string.alarm_in_few_seconds)
         }
 
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()

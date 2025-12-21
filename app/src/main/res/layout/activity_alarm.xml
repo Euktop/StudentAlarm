@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--activity alarm-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -15,7 +14,6 @@
         android:textSize="72sp"
         android:layout_marginBottom="32dp" />
 
-    <!-- Заменяем TextView на ScrollView для прокрутки длинного текста -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -27,8 +25,7 @@
             android:id="@+id/tvAlarmDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Будильник"
-            android:textSize="18sp"
+            android:textSize="@dimen/text_size_medium"
             android:textColor="@color/black"
             android:gravity="center"
             android:maxLines="100"
@@ -41,7 +38,7 @@
         android:id="@+id/btnDismiss"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Отключить"
+        android:text="@string/dismiss"
         android:textSize="20sp"
         android:padding="16dp"
         android:textColor="@color/white"

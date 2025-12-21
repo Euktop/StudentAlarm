@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--layout selection toolbar-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
-    android:padding="16dp"
-    >
+    android:padding="16dp">
 
     <ImageButton
         android:id="@+id/btnExitSelection"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="@color/transparent"
+        android:importantForAccessibility="no"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
-        android:tint="@color/black" />
+        app:tint="@color/black" />
 
     <TextView
         android:id="@+id/tvSelectionCount"
@@ -21,17 +21,18 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:gravity="center_vertical|start"
-        android:text="0 выбрано"
+        android:text="0 selected"
         android:textColor="@color/black"
-        android:textSize="18sp"
-        android:paddingStart="16dp" />
+        android:textSize="@dimen/text_size_medium"
+        android:paddingHorizontal="@dimen/padding_horizontal_element"
+        />
 
     <Button
         android:id="@+id/btnSelectAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:text="ВЫБРАТЬ ВСЕ"
+        android:text="@string/select_all"
         android:textColor="@color/black"
         android:textAllCaps="true" />
 

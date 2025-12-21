@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--dialog description-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -15,8 +14,7 @@
         android:inputType="textMultiLine"
         android:maxLines="5"
         android:textSize="@dimen/text_size_medium"
-        android:hint="@string/enter_a_description_of_the_alarm_clock"
-        />
+        android:hint="@string/enter_description" />
 
     <TextView
         android:id="@+id/tvCharCount"
@@ -25,8 +23,7 @@
         android:text="0"
         android:textSize="@dimen/text_size_small"
         android:textAlignment="textEnd"
-        android:layout_marginTop="4dp"
-        tools:ignore="HardcodedText" />
+        android:layout_marginTop="4dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -39,7 +36,7 @@
             android:id="@+id/btnDescriptionDialogCancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/Cancel"
+            android:text="@string/cancel"
             android:textSize="@dimen/text_size_medium"
             android:layout_marginEnd="8dp" />
 
@@ -48,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_size_medium"
-            android:text="@string/OK" />
+            android:text="@string/ok" />
 
     </LinearLayout>
 

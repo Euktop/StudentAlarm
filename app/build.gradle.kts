@@ -51,19 +51,16 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.recyclerview)
 
-    // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.core.splashscreen)
     kapt(libs.androidx.room.compiler)
 
-    // Lifecycle
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
@@ -71,7 +68,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation(libs.androidx.datastore.preferences)
-// Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
 }

@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [AlarmEntity::class],
-    version = 2, // Увеличиваем версию
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -22,7 +22,6 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Добавляем новую колонку
                 db.execSQL(
                     "ALTER TABLE alarms ADD COLUMN next_trigger_time INTEGER DEFAULT 0 NOT NULL"
                 )
@@ -37,7 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "alarm_database"
                 )
                     .addMigrations(MIGRATION_1_2)
-                    .fallbackToDestructiveMigration(false) // На всякий случай
+                    .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance
                 instance

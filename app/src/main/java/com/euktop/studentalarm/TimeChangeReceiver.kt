@@ -16,9 +16,7 @@ class TimeChangeReceiver : BroadcastReceiver() {
             Intent.ACTION_DATE_CHANGED -> {
                 CoroutineScope(Dispatchers.IO).launch {
                     (context.applicationContext as? AlarmApplication)?.let { app ->
-                        // Перепланируем все будильники
                         AlarmScheduler.rescheduleAllAlarms(context, app.alarmRepository)
-                        // Проверяем пропущенные будильники
                         AlarmScheduler.checkMissedAlarms(context, app.alarmRepository)
                     }
                 }

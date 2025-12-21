@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--item alarm in activity-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -13,7 +12,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Описание будильника"
+        android:text="Alarm description"
         android:textSize="16sp"
         android:textColor="@color/black"
         android:maxLines="2"
@@ -23,7 +22,7 @@
         android:id="@+id/btnDismissAlarm"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Откл."
+        android:text="@string/dismiss"
         android:textSize="14sp"
         android:paddingHorizontal="16dp"
         android:paddingVertical="8dp" />

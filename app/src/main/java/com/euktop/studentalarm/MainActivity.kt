@@ -7,8 +7,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
@@ -17,6 +15,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -30,13 +29,11 @@ class MainActivity : AppCompatActivity() {
     private var isBottomNavAnimating = false
     private var isBottomNavVisible = true
 
-    // Флаг для предотвращения многократной проверки
     private var hasCheckedMissedAlarms = false
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        // Не показываем сообщение о результате
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,18 +41,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Сначала инициализируем UI
         setupUI()
 
-        // Откладываем тяжелые операции для оптимизации запуска
         lifecycleScope.launch {
-            // Даем время UI отрисоваться
             kotlinx.coroutines.delay(100)
 
-            // Проверяем разрешения (не блокируя UI)
             checkPermissionsOnStartup()
 
-            // Проверяем пропущенные будильники с задержкой
             kotlinx.coroutines.delay(1000)
             if (!hasCheckedMissedAlarms) {
                 checkMissedAlarmsOnStart()
@@ -124,21 +116,21 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.alarmsFragment -> {
-                    frameNameTextView.text = "Будильники"
+                    frameNameTextView.text = getString(R.string.alarms)
                     bottomNavigationView.selectedItemId = R.id.alarmsFragment
                     if (!isBottomNavVisible) {
                         animateBottomNavigationContainer(true)
                     }
                 }
                 R.id.timerFragment -> {
-                    frameNameTextView.text = "Таймер"
+                    frameNameTextView.text = getString(R.string.timer)
                     bottomNavigationView.selectedItemId = R.id.timerFragment
                     if (!isBottomNavVisible) {
                         animateBottomNavigationContainer(true)
                     }
                 }
                 R.id.alarmEditFragment -> {
-                    frameNameTextView.text = "Редактирование"
+                    frameNameTextView.text = getString(R.string.edit)
                     if (isBottomNavVisible) {
                         animateBottomNavigationContainer(false)
                     }
@@ -155,7 +147,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // Проверяем разрешения при возвращении в приложение
         checkPermissionsAndDisableAlarms()
     }
 
@@ -178,11 +169,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            /*
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (!PermissionManager.hasNotificationPermission(this@MainActivity)) {
                     requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
+            */
         }
     }
 
@@ -216,7 +209,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         Toast.makeText(
                             this@MainActivity,
-                            "Все будильники отключены из-за отсутствия необходимых разрешений",
+                            getString(R.string.alarm_disabled_no_permission),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -233,7 +226,11 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             PermissionManager.OVERLAY_PERMISSION_REQUEST_CODE -> {
                 if (PermissionManager.hasOverlayPermission(this)) {
-                    Toast.makeText(this, "Разрешение предоставлено", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.permission_granted),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -245,7 +242,6 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // Не показываем сообщение о результате
     }
 
     private fun animateBottomNavigationContainer(show: Boolean) {

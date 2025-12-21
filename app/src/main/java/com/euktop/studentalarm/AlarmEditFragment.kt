@@ -8,7 +8,9 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -61,9 +63,9 @@ class AlarmEditFragment : Fragment() {
 
     private fun setupUI() {
         if (alarmId > 0) {
-            binding.tvTitle.text = context?.getString(R.string.EditingAlarm)
+            binding.tvTitle.text = context?.getString(R.string.edit)
         } else {
-            binding.tvTitle.text = context?.getString(R.string.NewAlarm)
+            binding.tvTitle.text = context?.getString(R.string.new_alarm)
         }
 
         updateTimeDisplay()
@@ -101,7 +103,6 @@ class AlarmEditFragment : Fragment() {
         }
     }
 
-    // ==================== MATERIAL TIME PICKER ====================
     @SuppressLint("SetTextI18n")
     private fun showMaterialTimePicker() {
         if (isTimePickerShowing) return
@@ -112,10 +113,10 @@ class AlarmEditFragment : Fragment() {
             .setTimeFormat(TimeFormat.CLOCK_24H)
             .setHour(selectedHour)
             .setMinute(selectedMinute)
-            .setTitleText(getString(R.string.SelectAlarmTime))
+            .setTitleText(getString(R.string.alarm_time))
             .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
-            .setPositiveButtonText(getString(R.string.Set))
-            .setNegativeButtonText(getString(R.string.Cancel))
+            .setPositiveButtonText(getString(R.string.set))
+            .setNegativeButtonText(getString(R.string.cancel))
             .build()
 
         picker.addOnPositiveButtonClickListener {
@@ -140,32 +141,25 @@ class AlarmEditFragment : Fragment() {
         binding.tvHour.text = String.format("%02d", selectedHour)
         binding.tvMinute.text = String.format("%02d", selectedMinute)
 
-        // Анимация при изменении времени
-        animateTimeChange()
-    }
-
-    private fun animateTimeChange() {
         AnimatorHelper.bounceView(binding.tvHour, 1.2f, R.integer.anim_duration.toLong())
         AnimatorHelper.bounceView(binding.tvMinute, 1.2f, R.integer.anim_duration.toLong())
     }
 
-    // ==================== DAYS SELECTION DIALOG ====================
     private fun showDaysDialog() {
         if (isDaysDialogShowing) return
 
         isDaysDialogShowing = true
 
         val daysArray = arrayOf(
-            getString(R.string.DayOfWeekMonday),
-            getString(R.string.DayOfWeekTuesday),
-            getString(R.string.DayOfWeekWednesday),
-            getString(R.string.DayOfWeekThursday),
-            getString(R.string.DayOfWeekFriday),
-            getString(R.string.DayOfWeekSaturday),
-            getString(R.string.DayOfWeekSunday)
+            getString(R.string.monday),
+            getString(R.string.tuesday),
+            getString(R.string.wednesday),
+            getString(R.string.thursday),
+            getString(R.string.friday),
+            getString(R.string.saturday),
+            getString(R.string.sunday)
         )
 
-        // Создаем временную копию выбранных дней для работы внутри диалога
         val tempSelectedDays = selectedDaysOfWeek.toMutableList()
 
         val checkedItems = BooleanArray(7) { index ->
@@ -173,7 +167,7 @@ class AlarmEditFragment : Fragment() {
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.SelectDays))
+            .setTitle(getString(R.string.select_days))
             .setMultiChoiceItems(daysArray, checkedItems) { _, which, isChecked ->
                 val dayNumber = which + 1
                 if (isChecked) {
@@ -184,15 +178,13 @@ class AlarmEditFragment : Fragment() {
                     tempSelectedDays.remove(dayNumber)
                 }
             }
-            .setPositiveButton(getString(R.string.OK)) { _, _ ->
-                // Применяем изменения только при нажатии OK
+            .setPositiveButton(getString(R.string.ok)) { _, _ ->
                 selectedDaysOfWeek.clear()
                 selectedDaysOfWeek.addAll(tempSelectedDays)
                 updateDaysDisplay()
                 isDaysDialogShowing = false
             }
-            .setNegativeButton(getString(R.string.Cancel)) { _, _ ->
-                // При отмене ничего не делаем - tempSelectedDays игнорируется
+            .setNegativeButton(getString(R.string.cancel)) { _, _ ->
                 isDaysDialogShowing = false
             }
             .setOnDismissListener {
@@ -204,21 +196,21 @@ class AlarmEditFragment : Fragment() {
     private fun updateDaysDisplay() {
         val context = requireContext()
         val daysText = when {
-            selectedDaysOfWeek.isEmpty() -> context.getString(R.string.RepeatOnce)
-            selectedDaysOfWeek.size == 7 -> context.getString(R.string.RepeatDaily)
+            selectedDaysOfWeek.isEmpty() -> context.getString(R.string.once)
+            selectedDaysOfWeek.size == 7 -> context.getString(R.string.daily)
             selectedDaysOfWeek.size == 5 && selectedDaysOfWeek.containsAll(listOf(1, 2, 3, 4, 5)) ->
-                context.getString(R.string.RepeatWeekdays)
+                context.getString(R.string.weekdays)
             selectedDaysOfWeek.size == 2 && selectedDaysOfWeek.containsAll(listOf(6, 7)) ->
-                context.getString(R.string.RepeatWeekends)
+                context.getString(R.string.weekends)
             else -> selectedDaysOfWeek.sorted().joinToString(", ") { day ->
                 when (day) {
-                    1 -> context.getString(R.string.DayOfWeekMondayShort)
-                    2 -> context.getString(R.string.DayOfWeekTuesdayShort)
-                    3 -> context.getString(R.string.DayOfWeekWednesdayShort)
-                    4 -> context.getString(R.string.DayOfWeekThursdayShort)
-                    5 -> context.getString(R.string.DayOfWeekFridayShort)
-                    6 -> context.getString(R.string.DayOfWeekSaturdayShort)
-                    7 -> context.getString(R.string.DayOfWeekSundayShort)
+                    1 -> context.getString(R.string.mon)
+                    2 -> context.getString(R.string.tue)
+                    3 -> context.getString(R.string.wed)
+                    4 -> context.getString(R.string.thu)
+                    5 -> context.getString(R.string.fri)
+                    6 -> context.getString(R.string.sat)
+                    7 -> context.getString(R.string.sun)
                     else -> ""
                 }
             }
@@ -226,7 +218,6 @@ class AlarmEditFragment : Fragment() {
         binding.tvSelectedDays.text = daysText
     }
 
-    // ==================== DESCRIPTION DIALOG ====================
     private fun showDescriptionDialog() {
         if (isDescriptionDialogShowing) return
 
@@ -237,12 +228,11 @@ class AlarmEditFragment : Fragment() {
 
         val editText = dialogView.findViewById<EditText>(R.id.editTextDescription)
         val tvCharCount = dialogView.findViewById<TextView>(R.id.tvCharCount)
-        val btnOk = dialogView.findViewById<Button>(R.id.btnDescriptionDialogOk)
-        val btnCancel = dialogView.findViewById<Button>(R.id.btnDescriptionDialogCancel)
+        val btnOk = dialogView.findViewById<android.widget.Button>(R.id.btnDescriptionDialogOk)
+        val btnCancel = dialogView.findViewById<android.widget.Button>(R.id.btnDescriptionDialogCancel)
 
         editText.setText(description)
 
-        // Сразу обновляем счетчик символов при открытии диалога
         val currentLength = description.length
         tvCharCount.text = "$currentLength"
 
@@ -251,7 +241,6 @@ class AlarmEditFragment : Fragment() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                // Обновляем счетчик при каждом изменении
                 val currentLength = s?.length ?: 0
                 tvCharCount.text = "$currentLength"
             }
@@ -261,7 +250,7 @@ class AlarmEditFragment : Fragment() {
         })
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.DescriptionAlarm))
+            .setTitle(getString(R.string.description))
             .setView(dialogView)
             .setOnDismissListener {
                 isDescriptionDialogShowing = false
@@ -285,15 +274,12 @@ class AlarmEditFragment : Fragment() {
 
     private fun updateDescriptionDisplay() {
         if (description.isNotEmpty()) {
-            binding.btnDescription.text = getString(R.string.ChangeDescription)
             binding.tvDescription.text = description
         } else {
-            binding.btnDescription.text = getString(R.string.AddDescription)
-            binding.tvDescription.text = getString(R.string.Alarm)
+            binding.tvDescription.text = getString(R.string.alarms)
         }
     }
 
-    // ==================== CLICK LISTENERS ====================
     private fun setupClickListeners() {
         binding.tvHour.setOnClickListener { showMaterialTimePicker() }
         binding.tvMinute.setOnClickListener { showMaterialTimePicker() }
@@ -311,30 +297,25 @@ class AlarmEditFragment : Fragment() {
         }
     }
 
-    // ==================== CHECK PERMISSIONS AND SAVE ====================
     private fun checkPermissionsAndSave() {
         if (!validateAlarm()) {
             return
         }
 
-        // Проверяем наличие всех необходимых разрешений
         if (!PermissionManager.hasAllAlarmPermissions(requireContext())) {
             showPermissionsRequiredDialog()
             return
         }
 
-        // Все разрешения есть, сохраняем будильник
         saveAlarm()
     }
 
     private fun showPermissionsRequiredDialog() {
         val activity = requireActivity() as MainActivity
         activity.checkAlarmPermissionsAndExecute {
-            // Пользователь перешел в настройки, но мы все равно не сохраняем будильник
-            // Он может создать будильник после возвращения и настройки разрешений
             Toast.makeText(
                 requireContext(),
-                "Настройте разрешения и попробуйте снова",
+                getString(R.string.configure_permissions_and_try_again),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -359,14 +340,13 @@ class AlarmEditFragment : Fragment() {
                 }
                 findNavController().popBackStack()
             } catch (e: Exception) {
-                // Не показываем сообщение об ошибке
             }
         }
     }
 
     private fun validateAlarm(): Boolean {
         if (selectedHour < 0 || selectedHour > 23 || selectedMinute < 0 || selectedMinute > 59) {
-            Toast.makeText(requireContext(), getString(R.string.IncorrectTime), Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.invalid_time), Toast.LENGTH_SHORT).show()
             return false
         }
         return true

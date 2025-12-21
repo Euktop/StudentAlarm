@@ -1,15 +1,15 @@
 package com.euktop.studentalarm
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.os.Build
 
 class AlarmCheckService : Service() {
 
@@ -27,7 +27,6 @@ class AlarmCheckService : Service() {
             AlarmScheduler.checkMissedAlarms(applicationContext, app.alarmRepository)
         }
 
-        // Перезапускаем сервис через некоторое время
         return START_STICKY
     }
 
@@ -48,15 +47,15 @@ class AlarmCheckService : Service() {
     private fun createNotification(): Notification {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle("Будильник")
-                .setContentText("Проверка пропущенных будильников")
+                .setContentTitle(getString(R.string.alarms))
+                .setContentText(getString(R.string.checking_missed_alarms))
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .build()
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
-                .setContentTitle("Будильник")
-                .setContentText("Проверка пропущенных будильников")
+                .setContentTitle(getString(R.string.alarms))
+                .setContentText(getString(R.string.checking_missed_alarms))
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .build()
         }

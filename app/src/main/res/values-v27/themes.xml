@@ -7,7 +7,6 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowIsFloating">false</item>
         <item name="android:backgroundDimEnabled">false</item>
-        <!-- Для Android 10+ чтобы activity показывалась поверх блокировки -->
         <item name="android:showWhenLocked">true</item>
         <item name="android:turnScreenOn">true</item>
     </style>

@@ -26,7 +26,7 @@ data class AlarmEntity(
     val isEnabled: Boolean,
 
     @ColumnInfo(name = "next_trigger_time", defaultValue = "0")
-    val nextTriggerTime: Long = 0L, // Новое поле
+    val nextTriggerTime: Long = 0L,
 
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis()

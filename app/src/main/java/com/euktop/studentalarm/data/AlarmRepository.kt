@@ -39,4 +39,8 @@ class AlarmRepository(private val alarmDao: AlarmDao) {
     suspend fun getMissedAlarms(currentTime: Long): List<Alarm> {
         return alarmDao.getMissedAlarms(currentTime).map { it.toAlarm() }
     }
+
+    suspend fun getAlarmsByIds(ids: List<Long>): List<Alarm> {
+        return alarmDao.getAlarmsByIds(ids).map { it.toAlarm() }
+    }
 }

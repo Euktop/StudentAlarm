@@ -12,7 +12,7 @@ data class Alarm(
     val description: String = "",
     val daysOfWeek: List<Int> = emptyList(),
     var isEnabled: Boolean = true,
-    var nextTriggerTime: Long = 0L // Новое поле
+    var nextTriggerTime: Long = 0L
 ) {
     @SuppressLint("DefaultLocale")
     fun formattedTime(): String = String.format("%02d:%02d", hour, minute)
@@ -21,21 +21,21 @@ data class Alarm(
 
     fun getRepetitionText(context: Context): String {
         return when {
-            daysOfWeek.isEmpty() -> context.getString(R.string.RepeatOnce)
-            daysOfWeek.size == 7 -> context.getString(R.string.RepeatDaily)
-            daysOfWeek.size == 5 &&
-                    daysOfWeek.containsAll(listOf(1, 2, 3, 4, 5)) -> context.getString(R.string.RepeatWeekdays)
-            daysOfWeek.size == 2 &&
-                    daysOfWeek.containsAll(listOf(6, 7)) -> context.getString(R.string.RepeatWeekends)
+            daysOfWeek.isEmpty() -> context.getString(R.string.once)
+            daysOfWeek.size == 7 -> context.getString(R.string.daily)
+            daysOfWeek.size == 5 && daysOfWeek.containsAll(listOf(1, 2, 3, 4, 5)) ->
+                context.getString(R.string.weekdays)
+            daysOfWeek.size == 2 && daysOfWeek.containsAll(listOf(6, 7)) ->
+                context.getString(R.string.weekends)
             else -> daysOfWeek.sorted().joinToString(", ") { day ->
                 when (day) {
-                    1 -> context.getString(R.string.DayOfWeekMondayShort)
-                    2 -> context.getString(R.string.DayOfWeekTuesdayShort)
-                    3 -> context.getString(R.string.DayOfWeekWednesdayShort)
-                    4 -> context.getString(R.string.DayOfWeekThursdayShort)
-                    5 -> context.getString(R.string.DayOfWeekFridayShort)
-                    6 -> context.getString(R.string.DayOfWeekSaturdayShort)
-                    7 -> context.getString(R.string.DayOfWeekSundayShort)
+                    1 -> context.getString(R.string.mon)
+                    2 -> context.getString(R.string.tue)
+                    3 -> context.getString(R.string.wed)
+                    4 -> context.getString(R.string.thu)
+                    5 -> context.getString(R.string.fri)
+                    6 -> context.getString(R.string.sat)
+                    7 -> context.getString(R.string.sun)
                     else -> ""
                 }
             }

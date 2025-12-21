@@ -50,11 +50,13 @@ class AlarmsFragment : Fragment() {
         setupScrollListenerWithTranslation()
         setupSelectionListeners()
     }
+
     private fun setupViewModel() {
         val app = requireActivity().application as AlarmApplication
         val viewModelFactory = ViewModelFactory(app.alarmRepository, requireContext())
         viewModel = ViewModelProvider(this, viewModelFactory)[AlarmViewModel::class.java]
     }
+
     private fun setupSelectionListeners() {
         adapter.onSelectionModeChanged = { isSelectionMode ->
             if (isSelectionMode) {
@@ -65,13 +67,11 @@ class AlarmsFragment : Fragment() {
         }
 
         adapter.onSelectedCountChanged = { count ->
-            binding.tvSelectedCount.text = getString(R.string.selected_count, count)
+            binding.tvSelectedCount.text = getString(R.string.selected, count)
 
             if (adapter.isAllSelected()) {
-                binding.btnToggleSelectAll.setImageResource(R.drawable.deselect_all)
-                binding.btnToggleSelectAll.contentDescription = getString(R.string.remove_selection)
+                binding.btnToggleSelectAll.contentDescription = getString(R.string.deselect_all)
             } else {
-                binding.btnToggleSelectAll.setImageResource(R.drawable.select_all)
                 binding.btnToggleSelectAll.contentDescription = getString(R.string.select_all)
             }
         }
@@ -158,6 +158,7 @@ class AlarmsFragment : Fragment() {
             }
             .start()
     }
+
     private fun setupRecyclerView() {
         adapter = AlarmRecyclerAdapter(requireContext())
 
@@ -232,7 +233,7 @@ class AlarmsFragment : Fragment() {
     }
 
     private fun showSelectionMode() {
-         binding.selectionToolbar.visibility = View.VISIBLE
+        binding.selectionToolbar.visibility = View.VISIBLE
         binding.fabDelete.visibility = View.VISIBLE
         binding.fabAddAlarm.visibility = View.GONE
 
@@ -273,8 +274,8 @@ class AlarmsFragment : Fragment() {
 
         val count = selectedAlarms.size
         AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.delete_alarms_title))
-            .setMessage(getString(R.string.delete_alarms_message, count))
+            .setTitle(getString(R.string.delete_alarm))
+            .setMessage(getString(R.string.delete_alarms, count))
             .setPositiveButton(getString(R.string.delete)) { dialog, _ ->
                 lifecycleScope.launch {
                     selectedAlarms.forEach { alarm ->
@@ -284,7 +285,7 @@ class AlarmsFragment : Fragment() {
                 }
                 dialog.dismiss()
             }
-            .setNegativeButton(getString(R.string.Cancel)) { dialog, _ ->
+            .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
             }
             .setCancelable(true)

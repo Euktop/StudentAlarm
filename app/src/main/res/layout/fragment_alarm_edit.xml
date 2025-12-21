@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--fragment alarm edit-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -24,7 +22,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@color/transparent"
-                android:contentDescription="@string/Cancel"
+                android:contentDescription="@string/cancel"
                 app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
                 app:tint="@color/black" />
 
@@ -35,24 +33,22 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:paddingHorizontal="8dp"
-                android:text="@string/NewAlarm"
+                android:text="@string/new_alarm"
                 android:textColor="@color/black"
                 android:textSize="@dimen/text_size_medium"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
+                android:textStyle="bold" />
 
             <ImageButton
                 android:id="@+id/btnSave"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@color/transparent"
-                android:contentDescription="@string/Save"
+                android:contentDescription="@string/save"
                 app:tint="@color/black"
                 app:srcCompat="@android:drawable/ic_menu_save" />
 
         </LinearLayout>
 
-        <!-- Выбор времени -->
         <LinearLayout
             android:id="@+id/timeSelectionContainer"
             android:layout_width="match_parent"
@@ -69,7 +65,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="@string/Time"
+                android:text="@string/time"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="@dimen/text_size_medium" />
 
@@ -81,7 +77,6 @@
                 android:background="@drawable/rounded_time_background"
                 android:padding="8dp">
 
-                <!-- Часы -->
                 <TextView
                     android:id="@+id/tvHour"
                     android:layout_width="wrap_content"
@@ -94,8 +89,7 @@
                     android:gravity="center"
                     android:minWidth="80dp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="sans-serif-light"
-                    tools:ignore="HardcodedText" />
+                    android:fontFamily="sans-serif-light" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -104,10 +98,8 @@
                     android:textSize="48sp"
                     android:paddingHorizontal="8dp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="sans-serif-light"
-                    tools:ignore="HardcodedText" />
+                    android:fontFamily="sans-serif-light" />
 
-                <!-- Минуты -->
                 <TextView
                     android:id="@+id/tvMinute"
                     android:layout_width="wrap_content"
@@ -120,8 +112,7 @@
                     android:gravity="center"
                     android:minWidth="80dp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="sans-serif-light"
-                    tools:ignore="HardcodedText" />
+                    android:fontFamily="sans-serif-light" />
 
             </LinearLayout>
 
@@ -135,7 +126,6 @@
 
         </LinearLayout>
 
-        <!-- Повторять -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -146,7 +136,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="@string/Repeat"
+                android:text="@string/repeat"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="@dimen/text_size_medium"
                 android:textStyle="bold" />
@@ -155,7 +145,7 @@
                 android:id="@+id/btnRepeat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/SelectDays"
+                android:text="@string/select_days"
                 android:textAllCaps="false"
                 android:textSize="@dimen/text_size_medium" />
 
@@ -165,7 +155,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:paddingHorizontal="@dimen/padding_horizontal_element"
-                android:text="@string/RepeatOnce"
+                android:text="@string/once"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="@dimen/text_size_small" />
 
@@ -180,7 +170,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="@string/Description"
+                android:text="@string/description"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="@dimen/text_size_medium"
                 android:textStyle="bold" />
@@ -189,7 +179,7 @@
                 android:id="@+id/btnDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/AddDescription"
+                android:text="@string/add_description"
                 android:textAllCaps="false"
                 android:textSize="@dimen/text_size_medium" />
 
@@ -199,7 +189,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:paddingHorizontal="@dimen/padding_horizontal_element"
-                android:text="@string/Description"
+                android:text="@string/alarms"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="@dimen/text_size_small" />
 
