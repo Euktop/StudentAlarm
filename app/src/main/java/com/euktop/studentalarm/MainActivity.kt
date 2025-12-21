@@ -14,6 +14,7 @@ import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import androidx.core.view.size
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,7 +35,6 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
 
-        // Проверяем разрешения при запуске
         if (!PermissionManager.hasAllAlarmPermissions(this)) {
             PermissionManager.checkAndRequestPermissions(this) {
                 lifecycleScope.launch {
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
 
         val menu = bottomNavigationView.menu
         val menuOrder = mutableListOf<Int>()
-        for (i in 0 until menu.size()) {
+        for (i in 0 until menu.size) {
             menuOrder.add(menu[i].itemId)
         }
 

@@ -28,13 +28,13 @@ class AlarmRepository(private val alarmDao: AlarmDao) {
         alarmDao.deleteAlarm(alarm.toAlarmEntity())
     }
 
-    suspend fun deleteAlarmById(alarmId: Long) {
+/*    suspend fun deleteAlarmById(alarmId: Long) {
         alarmDao.deleteAlarmById(alarmId)
     }
 
     suspend fun getAlarmCount(): Int {
         return alarmDao.getAlarmCount()
-    }
+    }*/
 
     suspend fun getMissedAlarms(currentTime: Long): List<Alarm> {
         return alarmDao.getMissedAlarms(currentTime).map { it.toAlarm() }

@@ -137,6 +137,7 @@ class AlarmEditFragment : Fragment() {
         picker.show(childFragmentManager, "time_picker")
     }
 
+    @SuppressLint("DefaultLocale")
     private fun updateTimeDisplay() {
         binding.tvHour.text = String.format("%02d", selectedHour)
         binding.tvMinute.text = String.format("%02d", selectedMinute)

@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class AlarmCheckService : Service() {
 
-    private val CHANNEL_ID = "AlarmCheckServiceChannel"
+    private val channelId = "AlarmCheckServiceChannel"
 
     override fun onCreate() {
         super.onCreate()
@@ -33,31 +32,20 @@ class AlarmCheckService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "Alarm Check Service",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
-        }
+        val serviceChannel = NotificationChannel(
+            channelId,
+            "Alarm Check Service",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(serviceChannel)
     }
 
     private fun createNotification(): Notification {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle(getString(R.string.alarms))
-                .setContentText(getString(R.string.checking_missed_alarms))
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            Notification.Builder(this)
-                .setContentTitle(getString(R.string.alarms))
-                .setContentText(getString(R.string.checking_missed_alarms))
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .build()
-        }
+        return Notification.Builder(this, channelId)
+            .setContentTitle("Alarm")
+            .setContentText("Checking missed alarms")
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .build()
     }
 }

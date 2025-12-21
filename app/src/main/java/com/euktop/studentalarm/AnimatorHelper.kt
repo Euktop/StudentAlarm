@@ -19,7 +19,7 @@ object AnimatorHelper {
         val toY: Float
     )
 
-    fun slideView(
+/*    fun slideView(
         view: View,
         fromY: Float,
         toY: Float,
@@ -33,7 +33,7 @@ object AnimatorHelper {
         animator.doOnStart { onStart?.invoke() }
         animator.doOnEnd { onEnd?.invoke() }
         animator.start()
-    }
+    }*/
 
     fun slideViewFromDirection(
         view: View,
@@ -131,7 +131,7 @@ object AnimatorHelper {
         animatorY.start()
     }
 
-    fun fadeView(
+/*    fun fadeView(
         view: View,
         fromAlpha: Float,
         toAlpha: Float,
@@ -169,7 +169,7 @@ object AnimatorHelper {
 
         animatorX.start()
         animatorY.start()
-    }
+    }*/
 
     fun bounceView(
         view: View,

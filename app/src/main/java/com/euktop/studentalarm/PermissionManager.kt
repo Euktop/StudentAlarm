@@ -3,23 +3,17 @@ package com.euktop.studentalarm
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
-import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 
 object PermissionManager {
 
     const val OVERLAY_PERMISSION_REQUEST_CODE = 1001
-    const val SCHEDULE_EXACT_ALARM_REQUEST_CODE = 1003
 
     fun hasOverlayPermission(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Settings.canDrawOverlays(context)
-        } else {
-            true
-        }
+        return Settings.canDrawOverlays(context)
     }
 
     fun canScheduleExactAlarms(context: Context): Boolean {
@@ -36,16 +30,14 @@ object PermissionManager {
     }
 
     fun requestOverlayPermission(activity: Activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:${activity.packageName}")
-                )
-                activity.startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
-            } catch (e: Exception) {
-                openAppSettings(activity)
-            }
+        try {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                "package:${activity.packageName}".toUri()
+            )
+            activity.startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
+        } catch (e: Exception) {
+            openAppSettings(activity)
         }
     }
 
@@ -53,7 +45,7 @@ object PermissionManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                intent.data = Uri.parse("package:${activity.packageName}")
+                intent.data = "package:${activity.packageName}".toUri()
                 activity.startActivity(intent)
             } catch (e: Exception) {
                 openAppSettings(activity)
@@ -114,7 +106,7 @@ object PermissionManager {
     fun openAppSettings(activity: Activity) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${activity.packageName}")
+                data = "package:${activity.packageName}".toUri()
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             activity.startActivity(intent)

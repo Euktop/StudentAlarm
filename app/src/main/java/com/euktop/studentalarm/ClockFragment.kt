@@ -1,10 +1,10 @@
 package com.euktop.studentalarm
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.location.Geocoder
 import android.location.Location
 import android.net.ConnectivityManager
@@ -220,19 +220,12 @@ class ClockFragment : Fragment() {
         val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
 
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
 
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo ?: return false
-            @Suppress("DEPRECATION")
-            networkInfo.isConnected
-        }
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 
     @android.annotation.SuppressLint("Deprecation")
@@ -365,6 +358,7 @@ class ClockFragment : Fragment() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun displayWeather(weatherData: WeatherResponse, locationName: String?) {
         hideWeatherProgress()
 
@@ -393,6 +387,7 @@ class ClockFragment : Fragment() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun displayCachedWeather() {
         cachedWeatherData?.let { weatherData ->
             val displayCity = when {

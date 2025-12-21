@@ -1,6 +1,5 @@
 package com.euktop.studentalarm
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
@@ -74,20 +73,18 @@ class AlarmActivity : AppCompatActivity() {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
                     as android.app.NotificationManager
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = android.app.NotificationChannel(
-                    "alarm_fullscreen_channel",
-                    context.getString(R.string.alarms),
-                    android.app.NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Alarm channel"
-                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                    setSound(null, null)
-                    enableVibration(false)
-                    setBypassDnd(true)
-                }
-                notificationManager.createNotificationChannel(channel)
+            val channel = android.app.NotificationChannel(
+                "alarm_fullscreen_channel",
+                context.getString(R.string.alarms),
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Alarm channel"
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                setSound(null, null)
+                enableVibration(false)
+                setBypassDnd(true)
             }
+            notificationManager.createNotificationChannel(channel)
 
             val notification = androidx.core.app.NotificationCompat.Builder(
                 context,
@@ -184,14 +181,9 @@ class AlarmActivity : AppCompatActivity() {
             if (isAlarmRunning) return
 
             vibrator = getSystemService(Vibrator::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(
-                    longArrayOf(0, 667, 333, 667), 0
-                ))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 667, 333, 667), 0)
-            }
+            vibrator?.vibrate(android.os.VibrationEffect.createWaveform(
+                longArrayOf(0, 667, 333, 667), 0
+            ))
 
             val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -222,9 +214,9 @@ class AlarmActivity : AppCompatActivity() {
     private fun dismissAllAlarms() {
         stopAlarm()
 
-        AlarmActivity.resetAlarmState()
+        resetAlarmState()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE)
                 as android.app.NotificationManager
         notificationManager.cancel(9999)
 
@@ -261,6 +253,6 @@ class AlarmActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopAlarm()
-        AlarmActivity.resetAlarmState()
+        resetAlarmState()
     }
 }

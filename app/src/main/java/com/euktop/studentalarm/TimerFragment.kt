@@ -28,7 +28,7 @@ class TimerFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_timer, container, false)
     }
 
-    companion object {
+/*    companion object {
         @JvmStatic
         fun newInstance(param1: String, param2: String) =
             TimerFragment().apply {
@@ -37,5 +37,5 @@ class TimerFragment : Fragment() {
                     putString(ARG_PARAM2, param2)
                 }
             }
-    }
+    }*/
 }

@@ -34,7 +34,7 @@ class AlarmRecyclerAdapter(
         val repetitionRateTextView: TextView = view.findViewById(R.id.RepetitionRateTextView)
         @SuppressLint("UseSwitchCompatOrMaterialCode")
         val isEnabledAlarmSwitch: Switch = view.findViewById(R.id.IsEnabledAlarmSwitch)
-        val itemLayout: View = view.findViewById(R.id.itemLayout)
+        /*val itemLayout: View = view.findViewById(R.id.itemLayout)*/
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -190,7 +190,7 @@ class AlarmRecyclerAdapter(
 
     private fun showPermissionsRequiredDialog() {
         if (context is Activity) {
-            val activity = context as Activity
+            val activity = context
             if (activity is MainActivity) {
                 activity.checkPermissionsAndExecute {
                 }

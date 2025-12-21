@@ -73,7 +73,7 @@ object WeatherIconStorage {
             }
         }
     }
-
+/*
     fun clearCache(context: Context) {
         try {
             val iconsDir = File(context.filesDir, WEATHER_ICONS_DIR)
@@ -96,5 +96,5 @@ object WeatherIconStorage {
         } catch (e: Exception) {
             0
         }
-    }
+    }*/
 }

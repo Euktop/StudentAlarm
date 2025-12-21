@@ -10,6 +10,7 @@
         android:id="@+id/editTextDescription"
         android:layout_width="match_parent"
         android:layout_height="120dp"
+        android:autofillHints=""
         android:gravity="top"
         android:inputType="textMultiLine"
         android:maxLines="5"
@@ -23,9 +24,11 @@
         android:text="0"
         android:textSize="@dimen/text_size_small"
         android:textAlignment="textEnd"
-        android:layout_marginTop="4dp" />
+        android:layout_marginTop="4dp"
+        tools:ignore="HardcodedText" />
 
     <LinearLayout
+        style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -34,6 +37,7 @@
 
         <Button
             android:id="@+id/btnDescriptionDialogCancel"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cancel"
@@ -42,6 +46,7 @@
 
         <Button
             android:id="@+id/btnDescriptionDialogOk"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_size_medium"

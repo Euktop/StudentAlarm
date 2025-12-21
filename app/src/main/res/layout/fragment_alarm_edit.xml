@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -89,7 +90,8 @@
                     android:gravity="center"
                     android:minWidth="80dp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="sans-serif-light" />
+                    android:fontFamily="sans-serif-light"
+                    tools:ignore="HardcodedText" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -98,7 +100,8 @@
                     android:textSize="48sp"
                     android:paddingHorizontal="8dp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="sans-serif-light" />
+                    android:fontFamily="sans-serif-light"
+                    tools:ignore="HardcodedText" />
 
                 <TextView
                     android:id="@+id/tvMinute"
@@ -112,7 +115,8 @@
                     android:gravity="center"
                     android:minWidth="80dp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="sans-serif-light" />
+                    android:fontFamily="sans-serif-light"
+                    tools:ignore="HardcodedText" />
 
             </LinearLayout>
 
