@@ -3,7 +3,6 @@ package com.euktop.studentalarm
 import android.annotation.SuppressLint
 import android.content.Context
 import com.euktop.studentalarm.data.AlarmEntity
-//import java.util.Calendar
 
 data class Alarm(
     val id: Long = 0,
@@ -17,7 +16,6 @@ data class Alarm(
     @SuppressLint("DefaultLocale")
     fun formattedTime(): String = String.format("%02d:%02d", hour, minute)
 
-    //fun timeInMinutes(): Int = hour * 60 + minute
 
     fun getRepetitionText(context: Context): String {
         return when {
