@@ -63,7 +63,7 @@ class AlarmEditFragment : Fragment() {
 
     private fun setupUI() {
         if (alarmId > 0) {
-            binding.tvTitle.text = context?.getString(R.string.edit)
+            binding.tvTitle.text = context?.getString(R.string.edit_alarm)
         } else {
             binding.tvTitle.text = context?.getString(R.string.new_alarm)
         }

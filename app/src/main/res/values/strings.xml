@@ -8,6 +8,7 @@
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
+    <string name="edit_alarm">Edit the alarm clock</string>
     <string name="time">Time</string>
     <string name="repeat">Repeat</string>
     <string name="description">Description</string>

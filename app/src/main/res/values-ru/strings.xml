@@ -8,6 +8,7 @@
     <string name="cancel">Отмена</string>
     <string name="delete">Удалить</string>
     <string name="edit">Редактировать</string>
+    <string name="edit_alarm">Редактировать будильник</string>
     <string name="time">Время</string>
     <string name="repeat">Повтор</string>
     <string name="description">Описание</string>
