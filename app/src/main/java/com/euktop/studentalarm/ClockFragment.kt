@@ -28,6 +28,8 @@ import com.euktop.studentalarm.weather.WeatherResponse
 import com.euktop.studentalarm.weather.WeatherRetrofitClient
 import com.google.android.gms.location.*
 import kotlinx.coroutines.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ClockFragment : Fragment() {
 
@@ -45,7 +47,13 @@ class ClockFragment : Fragment() {
 
     private val clockHandler = Handler(Looper.getMainLooper())
     private var isClockUpdating = false
-    private var lastClockUpdateTime = 0L
+    private val clockUpdateRunnable = object : Runnable {
+        override fun run() {
+            if (!isClockUpdating || !isAdded) return
+            updateClock()
+            clockHandler.postDelayed(this, 10)
+        }
+    }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -53,42 +61,26 @@ class ClockFragment : Fragment() {
     private var lastLatitude: Double = 0.0
     private var lastLongitude: Double = 0.0
 
-    private val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-    private val dateFormat = java.text.SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault())
-    private val dayFormat = java.text.SimpleDateFormat("EEEE", java.util.Locale.getDefault())
-    private val millisFormat = java.text.SimpleDateFormat("SSS", java.util.Locale.getDefault())
-    private val updateTimeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    private val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+    private val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+    private val millisFormat = SimpleDateFormat("SSS", Locale.getDefault())
+    private val updateTimeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     private var cachedWeatherData: WeatherResponse? = null
     private var lastWeatherUpdateTime: Long = 0
     private var cachedLocationName: String? = null
     private var lastErrorMessage: String = ""
-    private var hasRequestedPermission = false
-    private var wasPermissionDeniedForever = false
 
     private lateinit var sharedPreferences: SharedPreferences
 
     private val locationPermissionRequest = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        hasRequestedPermission = true
-
-        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-
-        if (fineLocationGranted || coarseLocationGranted) {
-            wasPermissionDeniedForever = false
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
             attemptWeatherRefresh()
         } else {
-            if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) &&
-                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-                wasPermissionDeniedForever = true
-                lastErrorMessage = requireContext().getString(R.string.location_permission_denied_forever)
-            } else {
-                lastErrorMessage = requireContext().getString(R.string.location_permission_denied)
-            }
-            showWeatherError(lastErrorMessage)
-            displayCachedWeather()
+            showLocationPermissionDeniedDialog()
         }
     }
 
@@ -164,21 +156,6 @@ class ClockFragment : Fragment() {
     }
 
     private fun attemptWeatherRefresh() {
-        if (wasPermissionDeniedForever) {
-            lastErrorMessage = requireContext().getString(R.string.location_permission_denied_forever)
-            showWeatherError(lastErrorMessage)
-            displayCachedWeather()
-            return
-        }
-
-        if (!hasLocationPermissions()) {
-            locationPermissionRequest.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ))
-            return
-        }
-
         if (!isNetworkAvailable()) {
             lastErrorMessage = requireContext().getString(R.string.no_internet)
             showWeatherError(lastErrorMessage)
@@ -186,19 +163,57 @@ class ClockFragment : Fragment() {
             return
         }
 
+        if (!hasLocationPermissions()) {
+            requestLocationPermissionWithExplanation()
+            return
+        }
+
         showWeatherProgress()
         requestWeather()
+    }
+
+    private fun requestLocationPermissionWithExplanation() {
+        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            showLocationPermissionRationaleDialog()
+        } else {
+            locationPermissionRequest.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
+
+    private fun showLocationPermissionRationaleDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.permission_required))
+            .setMessage(getString(R.string.location_permission_denied))
+            .setPositiveButton(getString(R.string.settings)) { _, _ ->
+                locationPermissionRequest.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun showLocationPermissionDeniedDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.permission_required))
+            .setMessage(getString(R.string.location_permission_denied_forever))
+            .setPositiveButton(getString(R.string.settings)) { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun openAppSettings() {
+        val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val uri = android.net.Uri.fromParts("package", requireContext().packageName, null)
+        intent.data = uri
+        startActivity(intent)
     }
 
     private fun hasLocationPermissions(): Boolean {
         return ActivityCompat.checkSelfPermission(
             requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -220,10 +235,11 @@ class ClockFragment : Fragment() {
         }
     }
 
+    @android.annotation.SuppressLint("Deprecation")
     private suspend fun getExactLocationName(latitude: Double, longitude: Double): String? {
         return withContext(Dispatchers.IO) {
             try {
-                val geocoder = Geocoder(requireContext(), java.util.Locale.getDefault())
+                val geocoder = Geocoder(requireContext(), Locale.getDefault())
                 val addresses = geocoder.getFromLocation(latitude, longitude, 1)
 
                 addresses?.firstOrNull()?.let { address ->
@@ -302,7 +318,6 @@ class ClockFragment : Fragment() {
                     val locationName = getExactLocationName(latitude, longitude)
                     cachedLocationName = locationName
 
-                    // Сохраняем иконку погоды в кэш
                     weatherData.weather.firstOrNull()?.icon?.let { iconCode ->
                         WeatherIconStorage.loadOrDownloadIcon(requireContext(), iconCode)
                     }
@@ -314,31 +329,39 @@ class ClockFragment : Fragment() {
                     }
 
                 } else {
-                    val errorMessage = when (response.code()) {
-                        401 -> requireContext().getString(R.string.weather_api_key_invalid)
-                        404 -> requireContext().getString(R.string.weather_location_not_found)
-                        429 -> requireContext().getString(R.string.weather_too_many_requests)
-                        500 -> requireContext().getString(R.string.weather_server_error)
-                        else -> "${requireContext().getString(R.string.error)}: ${response.code()}"
-                    }
-
-                    lastErrorMessage = errorMessage
-
-                    withContext(Dispatchers.Main) {
-                        showWeatherError(errorMessage)
-                        hideWeatherProgress()
-                        displayCachedWeather()
-                    }
+                    handleWeatherError(response.code())
                 }
             } catch (e: Exception) {
-                lastErrorMessage = "${requireContext().getString(R.string.weather_network_error)}: ${e.message}"
-
-                withContext(Dispatchers.Main) {
-                    showWeatherError(lastErrorMessage)
-                    hideWeatherProgress()
-                    displayCachedWeather()
-                }
+                handleWeatherException(e)
             }
+        }
+    }
+
+    private fun handleWeatherError(errorCode: Int) {
+        val errorMessage = when (errorCode) {
+            401 -> requireContext().getString(R.string.weather_api_key_invalid)
+            404 -> requireContext().getString(R.string.weather_location_not_found)
+            429 -> requireContext().getString(R.string.weather_too_many_requests)
+            500 -> requireContext().getString(R.string.weather_server_error)
+            else -> "${requireContext().getString(R.string.error)}: $errorCode"
+        }
+
+        lastErrorMessage = errorMessage
+
+        CoroutineScope(Dispatchers.Main).launch {
+            showWeatherError(errorMessage)
+            hideWeatherProgress()
+            displayCachedWeather()
+        }
+    }
+
+    private fun handleWeatherException(e: Exception) {
+        lastErrorMessage = "${requireContext().getString(R.string.weather_network_error)}: ${e.message}"
+
+        CoroutineScope(Dispatchers.Main).launch {
+            showWeatherError(lastErrorMessage)
+            hideWeatherProgress()
+            displayCachedWeather()
         }
     }
 
@@ -359,13 +382,12 @@ class ClockFragment : Fragment() {
         tvWeatherDescription.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
 
         if (lastWeatherUpdateTime > 0) {
-            val time = updateTimeFormat.format(java.util.Date(lastWeatherUpdateTime))
+            val time = updateTimeFormat.format(Date(lastWeatherUpdateTime))
             tvLastUpdate.text = requireContext().getString(R.string.weather_last_updated, time)
         } else {
             tvLastUpdate.text = ""
         }
 
-        // Загружаем иконку из кэша или сети
         weatherData.weather.firstOrNull()?.icon?.let { iconCode ->
             loadWeatherIcon(iconCode)
         }
@@ -388,13 +410,12 @@ class ClockFragment : Fragment() {
             tvWeatherDescription.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
 
             if (lastWeatherUpdateTime > 0) {
-                val time = updateTimeFormat.format(java.util.Date(lastWeatherUpdateTime))
+                val time = updateTimeFormat.format(Date(lastWeatherUpdateTime))
                 tvLastUpdate.text = requireContext().getString(R.string.weather_last_updated, time)
             } else {
                 tvLastUpdate.text = ""
             }
 
-            // Загружаем сохраненную иконку
             weatherData.weather.firstOrNull()?.icon?.let { iconCode ->
                 loadWeatherIcon(iconCode)
             }
@@ -407,8 +428,6 @@ class ClockFragment : Fragment() {
             tvWeatherTemp.text = "--°C"
             tvWeatherDescription.text = ""
             tvLastUpdate.text = ""
-
-            // Очищаем иконку
             ivWeatherIcon.setImageDrawable(null)
         }
     }
@@ -421,7 +440,6 @@ class ClockFragment : Fragment() {
                     if (bitmap != null) {
                         ivWeatherIcon.setImageBitmap(bitmap)
                     } else {
-                        // Если нет в кэше, загружаем через Glide
                         val iconUrl = "https://openweathermap.org/img/wn/${iconCode}@2x.png"
                         Glide.with(this@ClockFragment)
                             .load(iconUrl)
@@ -506,10 +524,6 @@ class ClockFragment : Fragment() {
         }
         loadWeatherFromStorage()
         displayCachedWeather()
-
-        wasPermissionDeniedForever = !hasLocationPermissions() &&
-                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) &&
-                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
     override fun onPause() {
@@ -518,38 +532,31 @@ class ClockFragment : Fragment() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        stopClockUpdates()
+        clockHandler.removeCallbacksAndMessages(null)
+    }
+
     private fun startClockUpdates() {
         if (isClockUpdating) return
         isClockUpdating = true
-        lastClockUpdateTime = System.currentTimeMillis()
-
-        val updateRunnable = object : Runnable {
-            override fun run() {
-                if (!isClockUpdating || !isAdded) return
-                updateClock()
-                val currentTime = System.currentTimeMillis()
-                val elapsed = currentTime - lastClockUpdateTime
-                lastClockUpdateTime = currentTime
-                val targetDelay = 10L
-                val adjustedDelay = maxOf(1L, targetDelay - elapsed)
-                clockHandler.postDelayed(this, adjustedDelay)
-            }
-        }
-        clockHandler.post(updateRunnable)
+        updateClock()
+        clockHandler.post(clockUpdateRunnable)
     }
 
     private fun stopClockUpdates() {
         isClockUpdating = false
-        clockHandler.removeCallbacksAndMessages(null)
+        clockHandler.removeCallbacks(clockUpdateRunnable)
     }
 
     private fun updateClock() {
         val now = System.currentTimeMillis()
-        val timeStr = timeFormat.format(now)
-        val millisStr = millisFormat.format(now)
+        val timeStr = timeFormat.format(Date(now))
+        val millisStr = millisFormat.format(Date(now))
         val fullTimeStr = "$timeStr.$millisStr"
-        val dateStr = dateFormat.format(now)
-        val dayStr = dayFormat.format(now)
+        val dateStr = dateFormat.format(Date(now))
+        val dayStr = dayFormat.format(Date(now))
         tvTime.text = fullTimeStr
         tvDate.text = dateStr
         tvDayOfWeek.text = dayStr

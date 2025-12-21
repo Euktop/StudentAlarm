@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Будильник</string>
+    <string name="app_name">Будильник  Студента</string>
     <string name="alarms">Будильники</string>
     <string name="timer">Таймер</string>
     <string name="new_alarm">Новый будильник</string>
@@ -67,7 +67,7 @@
     <string name="checking_missed_alarms">Проверка пропущенных будильников</string>
     <string name="tap_to_dismiss">Нажмите, чтобы отключить</string>
     <string name="permission_overlay">показ поверх других окон</string>
-    <string name="permission_exact_alarm">установка точных будильников</string>
+    <string name="permission_exact_alarm">установка будильников</string>
     <string name="permission_notification">уведомления</string>
     <string name="permissions_dialog_message">Для работы будильника необходимо предоставить:\n\n• %s</string>
     <string name="clock">Часы</string>

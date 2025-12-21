@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">StudentAlarm</string>
-    <string name="alarms">Alarms</string>
+    <string name="app_name">Student Alarm Clock</string>
+    <string name="alarms">Alarms clock</string>
     <string name="timer">Timer</string>
-    <string name="new_alarm">New alarm</string>
+    <string name="new_alarm">New alarm clock</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
@@ -43,8 +43,8 @@
     <string name="permissions_required">Permissions required</string>
     <string name="permissions_message">Required: %s</string>
     <string name="settings">Settings</string>
-    <string name="no_alarms">No alarms</string>
-    <string name="delete_alarm">Delete alarm?</string>
+    <string name="no_alarms">There are no alarm clocks</string>
+    <string name="delete_alarm">Delete the alarm clock?</string>
     <string name="delete_alarms">Delete %d alarms?</string>
     <string name="selected">Selected: %d</string>
     <string name="select_all">Select all</string>
@@ -53,9 +53,9 @@
     <string name="enter_description">Enter description</string>
     <string name="error">Error</string>
     <string name="invalid_time">Invalid time</string>
-    <string name="alarm_saved">Alarm saved</string>
-    <string name="alarm_updated">Alarm updated</string>
-    <string name="alarm_deleted">Alarm deleted</string>
+    <string name="alarm_saved">The alarm is saved</string>
+    <string name="alarm_updated">The alarm is updated</string>
+    <string name="alarm_deleted">The alarm is deleted</string>
     <string name="permission_granted">Permission granted</string>
     <string name="permission_required">Permission required</string>
     <string name="hello_blank_fragment">Hello</string>
@@ -67,7 +67,7 @@
     <string name="checking_missed_alarms">Checking missed alarms</string>
     <string name="tap_to_dismiss">Tap to dismiss</string>
     <string name="permission_overlay">show over other apps</string>
-    <string name="permission_exact_alarm">set exact alarms</string>
+    <string name="permission_exact_alarm">set alarms</string>
     <string name="permission_notification">notifications</string>
     <string name="permissions_dialog_message">For alarms to work correctly, you need to grant:\n\n• %s</string>
     <string name="clock">Clock</string>

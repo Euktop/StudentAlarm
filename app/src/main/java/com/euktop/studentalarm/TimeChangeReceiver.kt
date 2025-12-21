@@ -11,6 +11,10 @@ class TimeChangeReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_REBOOT,
+            Intent.ACTION_LOCKED_BOOT_COMPLETED,
+            "android.intent.action.QUICKBOOT_POWERON",
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
             Intent.ACTION_DATE_CHANGED -> {

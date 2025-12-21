@@ -1,22 +1,17 @@
 package com.euktop.studentalarm
 
-import android.Manifest
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 object PermissionManager {
 
     const val OVERLAY_PERMISSION_REQUEST_CODE = 1001
-    const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
     const val SCHEDULE_EXACT_ALARM_REQUEST_CODE = 1003
 
     fun hasOverlayPermission(context: Context): Boolean {
@@ -25,20 +20,6 @@ object PermissionManager {
         } else {
             true
         }
-    }
-
-    fun hasNotificationPermission(context: Context): Boolean {
-        /*
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
-        */
-        return true
     }
 
     fun canScheduleExactAlarms(context: Context): Boolean {
@@ -80,18 +61,6 @@ object PermissionManager {
         }
     }
 
-    fun requestNotificationPermission(activity: Activity) {
-        /*
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                NOTIFICATION_PERMISSION_REQUEST_CODE
-            )
-        }
-        */
-    }
-
     fun showAllPermissionsDialog(activity: Activity, onGranted: () -> Unit = {}) {
         val missingPermissions = mutableListOf<String>()
 
@@ -103,14 +72,6 @@ object PermissionManager {
             missingPermissions.add(activity.getString(R.string.permission_exact_alarm))
         }
 
-        /*
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!hasNotificationPermission(activity)) {
-                missingPermissions.add(activity.getString(R.string.permission_notification))
-            }
-        }
-        */
-
         if (missingPermissions.isEmpty()) {
             onGranted()
             return
@@ -118,7 +79,7 @@ object PermissionManager {
 
         val permissionsText = missingPermissions.joinToString("\n• ")
 
-        AlertDialog.Builder(activity)
+        androidx.appcompat.app.AlertDialog.Builder(activity)
             .setTitle(activity.getString(R.string.permissions_required))
             .setMessage(activity.getString(R.string.permissions_dialog_message, permissionsText))
             .setPositiveButton(activity.getString(R.string.settings)) { _, _ ->
@@ -127,7 +88,6 @@ object PermissionManager {
                 } else if (!canScheduleExactAlarms(activity)) {
                     requestScheduleExactAlarmPermission(activity)
                 }
-
                 onGranted()
             }
             .setNegativeButton(activity.getString(R.string.cancel)) { dialog, _ ->
@@ -137,30 +97,7 @@ object PermissionManager {
                     activity.getString(R.string.alarm_disabled_no_permission),
                     Toast.LENGTH_LONG
                 ).show()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    fun showSpecificPermissionDialog(activity: Activity, permissionType: String, message: String, onGranted: () -> Unit = {}) {
-        AlertDialog.Builder(activity)
-            .setTitle(activity.getString(R.string.permission_required))
-            .setMessage(message)
-            .setPositiveButton(activity.getString(R.string.settings)) { _, _ ->
-                when (permissionType) {
-                    "overlay" -> requestOverlayPermission(activity)
-                    "exact_alarm" -> requestScheduleExactAlarmPermission(activity)
-                    "notification" -> requestNotificationPermission(activity)
-                }
                 onGranted()
-            }
-            .setNegativeButton(activity.getString(R.string.cancel)) { dialog, _ ->
-                dialog.dismiss()
-                Toast.makeText(
-                    activity,
-                    activity.getString(R.string.alarm_disabled_no_permission),
-                    Toast.LENGTH_LONG
-                ).show()
             }
             .setCancelable(false)
             .show()
@@ -188,5 +125,14 @@ object PermissionManager {
                 Toast.LENGTH_LONG
             ).show()
         }
+    }
+
+    fun checkAndRequestPermissions(activity: Activity, onComplete: () -> Unit = {}) {
+        if (hasAllAlarmPermissions(activity)) {
+            onComplete()
+            return
+        }
+
+        showAllPermissionsDialog(activity, onComplete)
     }
 }

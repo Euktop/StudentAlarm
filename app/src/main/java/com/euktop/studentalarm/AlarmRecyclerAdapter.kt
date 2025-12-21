@@ -192,7 +192,7 @@ class AlarmRecyclerAdapter(
         if (context is Activity) {
             val activity = context as Activity
             if (activity is MainActivity) {
-                activity.checkAlarmPermissionsAndExecute {
+                activity.checkPermissionsAndExecute {
                 }
             } else {
                 PermissionManager.showAllPermissionsDialog(activity)

@@ -312,7 +312,7 @@ class AlarmEditFragment : Fragment() {
 
     private fun showPermissionsRequiredDialog() {
         val activity = requireActivity() as MainActivity
-        activity.checkAlarmPermissionsAndExecute {
+        activity.checkPermissionsAndExecute {
             Toast.makeText(
                 requireContext(),
                 getString(R.string.configure_permissions_and_try_again),
@@ -340,6 +340,7 @@ class AlarmEditFragment : Fragment() {
                 }
                 findNavController().popBackStack()
             } catch (e: Exception) {
+                Toast.makeText(requireContext(), getString(R.string.error), Toast.LENGTH_SHORT).show()
             }
         }
     }

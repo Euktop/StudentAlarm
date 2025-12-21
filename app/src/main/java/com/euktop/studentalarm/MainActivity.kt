@@ -1,11 +1,7 @@
 package com.euktop.studentalarm
 
-import android.Manifest
-import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
@@ -31,11 +27,6 @@ class MainActivity : AppCompatActivity() {
 
     private var hasCheckedMissedAlarms = false
 
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -43,15 +34,24 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
 
-        lifecycleScope.launch {
-            kotlinx.coroutines.delay(100)
-
-            checkPermissionsOnStartup()
-
-            kotlinx.coroutines.delay(1000)
-            if (!hasCheckedMissedAlarms) {
-                checkMissedAlarmsOnStart()
-                hasCheckedMissedAlarms = true
+        // Проверяем разрешения при запуске
+        if (!PermissionManager.hasAllAlarmPermissions(this)) {
+            PermissionManager.checkAndRequestPermissions(this) {
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(1000)
+                    if (!hasCheckedMissedAlarms) {
+                        checkMissedAlarmsOnStart()
+                        hasCheckedMissedAlarms = true
+                    }
+                }
+            }
+        } else {
+            lifecycleScope.launch {
+                kotlinx.coroutines.delay(1000)
+                if (!hasCheckedMissedAlarms) {
+                    checkMissedAlarmsOnStart()
+                    hasCheckedMissedAlarms = true
+                }
             }
         }
     }
@@ -151,6 +151,24 @@ class MainActivity : AppCompatActivity() {
         checkPermissionsAndDisableAlarms()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        when (requestCode) {
+            PermissionManager.OVERLAY_PERMISSION_REQUEST_CODE -> {
+                if (PermissionManager.hasOverlayPermission(this)) {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.permission_granted),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    checkPermissionsAndDisableAlarms()
+                }
+            }
+        }
+    }
+
     private fun checkMissedAlarmsOnStart() {
         lifecycleScope.launch {
             try {
@@ -159,24 +177,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
-
-    private fun checkPermissionsOnStartup() {
-        lifecycleScope.launch {
-            if (!PermissionManager.hasAllAlarmPermissions(this@MainActivity)) {
-                runOnUiThread {
-                    PermissionManager.showAllPermissionsDialog(this@MainActivity)
-                }
-            }
-
-            /*
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (!PermissionManager.hasNotificationPermission(this@MainActivity)) {
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-            }
-            */
         }
     }
 
@@ -219,30 +219,6 @@ class MainActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        when (requestCode) {
-            PermissionManager.OVERLAY_PERMISSION_REQUEST_CODE -> {
-                if (PermissionManager.hasOverlayPermission(this)) {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.permission_granted),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     private fun animateBottomNavigationContainer(show: Boolean) {
@@ -300,7 +276,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun checkAlarmPermissionsAndExecute(action: () -> Unit) {
+    fun checkPermissionsAndExecute(action: () -> Unit) {
         PermissionManager.checkAllPermissionsBeforeAction(this, action)
     }
 }

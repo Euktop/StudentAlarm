@@ -44,7 +44,9 @@ object AlarmScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (!alarmManager.canScheduleExactAlarms()) {
-                PermissionManager.requestScheduleExactAlarmPermission(context as android.app.Activity)
+                if (context is android.app.Activity) {
+                    PermissionManager.requestScheduleExactAlarmPermission(context)
+                }
                 return
             }
         }
