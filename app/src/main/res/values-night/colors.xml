@@ -7,4 +7,5 @@
     <color name="colorPrimary">#FFBB86FC</color>
     <color name="colorPrimaryDark">#FF3700B3</color>
     <color name="colorAccent">#FF03DAC5</color>
+    <color name="error">#F44336</color>
 </resources>

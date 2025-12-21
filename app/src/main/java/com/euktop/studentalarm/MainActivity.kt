@@ -122,9 +122,9 @@ class MainActivity : AppCompatActivity() {
                         animateBottomNavigationContainer(true)
                     }
                 }
-                R.id.timerFragment -> {
-                    frameNameTextView.text = getString(R.string.timer)
-                    bottomNavigationView.selectedItemId = R.id.timerFragment
+                R.id.clockFragment -> {
+                    frameNameTextView.text = getString(R.string.clock)
+                    bottomNavigationView.selectedItemId = R.id.clockFragment
                     if (!isBottomNavVisible) {
                         animateBottomNavigationContainer(true)
                     }
@@ -142,6 +142,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
     }
 
     override fun onResume() {
@@ -286,7 +287,7 @@ class MainActivity : AppCompatActivity() {
                 val currentDestination = navController.currentDestination?.id
 
                 when (currentDestination) {
-                    R.id.alarmsFragment, R.id.timerFragment -> {
+                    R.id.alarmsFragment, R.id.clockFragment -> {
                         finish()
                     }
                     else -> {

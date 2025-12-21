@@ -18,10 +18,10 @@
     </fragment>
 
     <fragment
-        android:id="@+id/timerFragment"
-        android:name="com.euktop.studentalarm.TimerFragment"
-        android:label="Таймер"
-        tools:layout="@layout/fragment_timer" />
+        android:id="@+id/clockFragment"
+        android:name="com.euktop.studentalarm.ClockFragment"
+        android:label="@string/clock"
+        tools:layout="@layout/fragment_clock" />
 
     <fragment
         android:id="@+id/alarmEditFragment"

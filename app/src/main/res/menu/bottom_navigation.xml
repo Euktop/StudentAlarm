@@ -5,9 +5,10 @@
     <item
         android:id="@+id/alarmsFragment"
         android:icon="@drawable/alarm"
-        tools:ignore="MenuTitle" />
+        android:title="@string/alarms" />
+
     <item
-        android:id="@+id/timerFragment"
-        android:icon="@drawable/timer"
-        tools:ignore="MenuTitle" />
+        android:id="@+id/clockFragment"
+        android:icon="@drawable/clock"
+        android:title="@string/clock" />
 </menu>
