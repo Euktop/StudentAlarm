@@ -1,554 +1,167 @@
+// app/src/main/java/com/euktop/studentalarm/ClockFragment.kt
 package com.euktop.studentalarm
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.location.Geocoder
-import android.location.Location
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.euktop.studentalarm.databinding.FragmentClockBinding
+import com.euktop.studentalarm.viewmodel.ClockViewModel
+import com.euktop.studentalarm.viewmodel.WeatherViewModel
+import com.euktop.studentalarm.viewmodel.ViewModelFactory
+import com.euktop.studentalarm.viewmodel.WeatherState
 import com.euktop.studentalarm.weather.WeatherIconStorage
-import com.euktop.studentalarm.weather.WeatherResponse
-import com.euktop.studentalarm.weather.WeatherRetrofitClient
-import com.google.android.gms.location.*
-import kotlinx.coroutines.*
-import java.text.SimpleDateFormat
-import java.util.*
+import kotlinx.coroutines.launch
 
 class ClockFragment : Fragment() {
 
-    private lateinit var tvTime: TextView
-    private lateinit var tvDate: TextView
-    private lateinit var tvDayOfWeek: TextView
-    private lateinit var tvWeatherCity: TextView
-    private lateinit var tvWeatherTemp: TextView
-    private lateinit var tvWeatherDescription: TextView
-    private lateinit var tvLastUpdate: TextView
-    private lateinit var weatherProgressBar: ProgressBar
-    private lateinit var weatherCard: View
-    private lateinit var btnRefreshWeather: Button
-    private lateinit var ivWeatherIcon: android.widget.ImageView
+    private var _binding: FragmentClockBinding? = null
+    private val binding get() = _binding!!
 
-    private val clockHandler = Handler(Looper.getMainLooper())
-    private var isClockUpdating = false
-    private val clockUpdateRunnable = object : Runnable {
-        override fun run() {
-            if (!isClockUpdating || !isAdded) return
-            updateClock()
-            clockHandler.postDelayed(this, 10)
-        }
-    }
-
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
-
-    private var lastLatitude: Double = 0.0
-    private var lastLongitude: Double = 0.0
-
-    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-    private val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
-    private val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-    private val millisFormat = SimpleDateFormat("SSS", Locale.getDefault())
-    private val updateTimeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
-    private var cachedWeatherData: WeatherResponse? = null
-    private var lastWeatherUpdateTime: Long = 0
-    private var cachedLocationName: String? = null
-    private var lastErrorMessage: String = ""
-
-    private lateinit var sharedPreferences: SharedPreferences
-
-    private val locationPermissionRequest = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            attemptWeatherRefresh()
-        } else {
-            showLocationPermissionDeniedDialog()
-        }
-    }
+    private lateinit var clockViewModel: ClockViewModel
+    private lateinit var weatherViewModel: WeatherViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.fragment_clock, container, false)
-
-        tvTime = view.findViewById(R.id.tvTime)
-        tvDate = view.findViewById(R.id.tvDate)
-        tvDayOfWeek = view.findViewById(R.id.tvDayOfWeek)
-
-        tvWeatherCity = view.findViewById(R.id.tvWeatherCity)
-        tvWeatherTemp = view.findViewById(R.id.tvWeatherTemp)
-        tvWeatherDescription = view.findViewById(R.id.tvWeatherDescription)
-        tvLastUpdate = view.findViewById(R.id.tvLastUpdate)
-        weatherProgressBar = view.findViewById(R.id.weatherProgressBar)
-        weatherCard = view.findViewById(R.id.weatherCard)
-        btnRefreshWeather = view.findViewById(R.id.btnRefreshWeather)
-        ivWeatherIcon = view.findViewById(R.id.ivWeatherIcon)
-
-        btnRefreshWeather.setOnClickListener {
-            attemptWeatherRefresh()
-        }
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let { location ->
-                    lastLatitude = location.latitude
-                    lastLongitude = location.longitude
-
-                    if (isNetworkAvailable()) {
-                        fetchWeather(location.latitude, location.longitude)
-                    } else {
-                        lastErrorMessage = requireContext().getString(R.string.no_internet)
-                        showWeatherError(lastErrorMessage)
-                        hideWeatherProgress()
-                        displayCachedWeather()
-                    }
-                    fusedLocationClient.removeLocationUpdates(locationCallback)
-                }
-            }
-
-            override fun onLocationAvailability(availability: LocationAvailability) {
-                if (!availability.isLocationAvailable) {
-                    hideWeatherProgress()
-                    lastErrorMessage = requireContext().getString(R.string.location_not_determined)
-                    showWeatherError(lastErrorMessage)
-                    displayCachedWeather()
-                }
-            }
-        }
-
-        sharedPreferences = requireContext().getSharedPreferences("weather_prefs", Context.MODE_PRIVATE)
-        loadWeatherFromStorage()
-
-        return view
+        _binding = FragmentClockBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        startClockUpdates()
-        displayCachedWeather()
+
+        initViewModels()
+        setupObservers()
+        setupClickListeners()
+
+        // Запускаем часы
+        clockViewModel.startClock()
+
+        // Загружаем погоду
+        weatherViewModel.loadWeather()
     }
 
-    private fun attemptWeatherRefresh() {
-        if (!isNetworkAvailable()) {
-            lastErrorMessage = requireContext().getString(R.string.no_internet)
-            showWeatherError(lastErrorMessage)
-            displayCachedWeather()
-            return
-        }
+    private fun initViewModels() {
+        // Для ClockViewModel не нужны параметры
+        clockViewModel = ViewModelProvider(this)[ClockViewModel::class.java]
 
-        if (!hasLocationPermissions()) {
-            requestLocationPermissionWithExplanation()
-            return
-        }
-
-        showWeatherProgress()
-        requestWeather()
+        // Для WeatherViewModel нужна фабрика
+        val app = requireActivity().application as AlarmApplication
+        val factory = ViewModelFactory(app.alarmRepository, requireContext())
+        weatherViewModel = ViewModelProvider(this, factory)[WeatherViewModel::class.java]
     }
 
-    private fun requestLocationPermissionWithExplanation() {
-        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-            showLocationPermissionRationaleDialog()
+    private fun setupObservers() {
+        // Наблюдаем за часами
+        clockViewModel.currentTime.observe(viewLifecycleOwner) { time ->
+            binding.tvTime.text = time
+        }
+
+        clockViewModel.currentDate.observe(viewLifecycleOwner) { date ->
+            binding.tvDate.text = date
+        }
+
+        clockViewModel.currentDay.observe(viewLifecycleOwner) { day ->
+            binding.tvDayOfWeek.text = day
+        }
+
+        clockViewModel.milliseconds.observe(viewLifecycleOwner) { millis ->
+            // Можно добавить миллисекунды если нужно
+            // binding.tvMilliseconds.text = millis
+        }
+
+        // Наблюдаем за погодой
+        weatherViewModel.weatherState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is WeatherState.Loading -> {
+                    showWeatherLoading()
+                }
+                is WeatherState.Success -> {
+                    hideWeatherLoading()
+                    displayWeather(state.weather)
+                }
+                is WeatherState.Error -> {
+                    hideWeatherLoading()
+                    showWeatherError(state.message)
+                }
+            }
+        }
+    }
+
+    private fun setupClickListeners() {
+        binding.btnRefreshWeather.setOnClickListener {
+            weatherViewModel.refreshWeather()
+        }
+    }
+
+    private fun showWeatherLoading() {
+        binding.weatherProgressBar.visibility = View.VISIBLE
+        binding.weatherCard.alpha = 0.6f
+    }
+
+    private fun hideWeatherLoading() {
+        binding.weatherProgressBar.visibility = View.GONE
+        binding.weatherCard.alpha = 1.0f
+    }
+
+    private fun displayWeather(weather: com.euktop.studentalarm.data.repository.WeatherUI) {
+        binding.tvWeatherCity.text = weather.city
+        binding.tvWeatherTemp.text = weather.temperature
+        binding.tvWeatherDescription.text = weather.description
+
+        if (weather.lastUpdate.isNotEmpty()) {
+            binding.tvLastUpdate.text =
+                requireContext().getString(R.string.weather_last_updated, weather.lastUpdate)
         } else {
-            locationPermissionRequest.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-    }
-
-    private fun showLocationPermissionRationaleDialog() {
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.permission_required))
-            .setMessage(getString(R.string.location_permission_denied))
-            .setPositiveButton(getString(R.string.settings)) { _, _ ->
-                locationPermissionRequest.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
-    }
-
-    private fun showLocationPermissionDeniedDialog() {
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.permission_required))
-            .setMessage(getString(R.string.location_permission_denied_forever))
-            .setPositiveButton(getString(R.string.settings)) { _, _ ->
-                openAppSettings()
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
-    }
-
-    private fun openAppSettings() {
-        val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        val uri = android.net.Uri.fromParts("package", requireContext().packageName, null)
-        intent.data = uri
-        startActivity(intent)
-    }
-
-    private fun hasLocationPermissions(): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun isNetworkAvailable(): Boolean {
-        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE)
-                as ConnectivityManager
-
-        val network = connectivityManager.activeNetwork ?: return false
-        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-
-        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-    }
-
-    @android.annotation.SuppressLint("Deprecation")
-    private suspend fun getExactLocationName(latitude: Double, longitude: Double): String? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val geocoder = Geocoder(requireContext(), Locale.getDefault())
-                val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-
-                addresses?.firstOrNull()?.let { address ->
-                    when {
-                        address.locality != null -> address.locality
-                        address.subLocality != null -> address.subLocality
-                        address.featureName != null -> address.featureName
-                        address.adminArea != null -> address.adminArea
-                        else -> null
-                    }
-                }
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-
-    private fun requestWeather() {
-        if (lastLatitude != 0.0 && lastLongitude != 0.0) {
-            fetchWeather(lastLatitude, lastLongitude)
-            return
+            binding.tvLastUpdate.text = ""
         }
 
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    lastLatitude = location.latitude
-                    lastLongitude = location.longitude
-                    fetchWeather(location.latitude, location.longitude)
-                } else {
-                    requestLocationUpdate()
-                }
-            }
-            .addOnFailureListener {
-                requestLocationUpdate()
-            }
+        // Загружаем иконку через Glide
+        loadWeatherIconWithGlide(weather.iconCode)
     }
 
-    private fun requestLocationUpdate() {
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            10000
-        ).apply {
-            setMinUpdateIntervalMillis(5000)
-        }.build()
-
-        if (!hasLocationPermissions()) {
-            hideWeatherProgress()
-            lastErrorMessage = requireContext().getString(R.string.location_permission_denied)
-            showWeatherError(lastErrorMessage)
-            return
-        }
-
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
-    }
-
-    private fun fetchWeather(latitude: Double, longitude: Double) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val call = WeatherRetrofitClient.weatherApiService
-                    .getWeatherByCoordinates(latitude, longitude)
-
-                val response = call.execute()
-
-                if (response.isSuccessful && response.body() != null) {
-                    val weatherData = response.body()!!
-
-                    cachedWeatherData = weatherData
-                    lastWeatherUpdateTime = System.currentTimeMillis()
-                    lastErrorMessage = ""
-
-                    val locationName = getExactLocationName(latitude, longitude)
-                    cachedLocationName = locationName
-
-                    weatherData.weather.firstOrNull()?.icon?.let { iconCode ->
-                        WeatherIconStorage.loadOrDownloadIcon(requireContext(), iconCode)
-                    }
-
-                    saveWeatherToStorage()
-
-                    withContext(Dispatchers.Main) {
-                        displayWeather(weatherData, locationName)
-                    }
-
-                } else {
-                    handleWeatherError(response.code())
-                }
-            } catch (e: Exception) {
-                handleWeatherException(e)
-            }
-        }
-    }
-
-    private fun handleWeatherError(errorCode: Int) {
-        val errorMessage = when (errorCode) {
-            401 -> requireContext().getString(R.string.weather_api_key_invalid)
-            404 -> requireContext().getString(R.string.weather_location_not_found)
-            429 -> requireContext().getString(R.string.weather_too_many_requests)
-            500 -> requireContext().getString(R.string.weather_server_error)
-            else -> "${requireContext().getString(R.string.error)}: $errorCode"
-        }
-
-        lastErrorMessage = errorMessage
-
-        CoroutineScope(Dispatchers.Main).launch {
-            showWeatherError(errorMessage)
-            hideWeatherProgress()
-            displayCachedWeather()
-        }
-    }
-
-    private fun handleWeatherException(e: Exception) {
-        lastErrorMessage = "${requireContext().getString(R.string.weather_network_error)}: ${e.message}"
-
-        CoroutineScope(Dispatchers.Main).launch {
-            showWeatherError(lastErrorMessage)
-            hideWeatherProgress()
-            displayCachedWeather()
-        }
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun displayWeather(weatherData: WeatherResponse, locationName: String?) {
-        hideWeatherProgress()
-
-        val displayCity = when {
-            locationName != null -> locationName
-            weatherData.cityName.isNotEmpty() -> weatherData.cityName
-            else -> requireContext().getString(R.string.city_undefined)
-        }
-
-        tvWeatherCity.text = displayCity
-        tvWeatherTemp.text = "${weatherData.main.temperature.toInt()}°C"
-        tvWeatherDescription.text = weatherData.weather.firstOrNull()?.description
-            ?.replaceFirstChar { it.uppercase() } ?: ""
-
-        tvWeatherDescription.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-
-        if (lastWeatherUpdateTime > 0) {
-            val time = updateTimeFormat.format(Date(lastWeatherUpdateTime))
-            tvLastUpdate.text = requireContext().getString(R.string.weather_last_updated, time)
-        } else {
-            tvLastUpdate.text = ""
-        }
-
-        weatherData.weather.firstOrNull()?.icon?.let { iconCode ->
-            loadWeatherIcon(iconCode)
-        }
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun displayCachedWeather() {
-        cachedWeatherData?.let { weatherData ->
-            val displayCity = when {
-                cachedLocationName != null -> cachedLocationName!!
-                weatherData.cityName.isNotEmpty() -> weatherData.cityName
-                lastErrorMessage.isNotEmpty() -> "${requireContext().getString(R.string.city_undefined)} ($lastErrorMessage)"
-                else -> requireContext().getString(R.string.city_undefined)
-            }
-
-            tvWeatherCity.text = displayCity
-            tvWeatherTemp.text = "${weatherData.main.temperature.toInt()}°C"
-            tvWeatherDescription.text = weatherData.weather.firstOrNull()?.description
-                ?.replaceFirstChar { it.uppercase() } ?: ""
-
-            tvWeatherDescription.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-
-            if (lastWeatherUpdateTime > 0) {
-                val time = updateTimeFormat.format(Date(lastWeatherUpdateTime))
-                tvLastUpdate.text = requireContext().getString(R.string.weather_last_updated, time)
-            } else {
-                tvLastUpdate.text = ""
-            }
-
-            weatherData.weather.firstOrNull()?.icon?.let { iconCode ->
-                loadWeatherIcon(iconCode)
-            }
-        } ?: run {
-            tvWeatherCity.text = if (lastErrorMessage.isNotEmpty()) {
-                "${requireContext().getString(R.string.city_undefined)} ($lastErrorMessage)"
-            } else {
-                requireContext().getString(R.string.city_undefined)
-            }
-            tvWeatherTemp.text = "--°C"
-            tvWeatherDescription.text = ""
-            tvLastUpdate.text = ""
-            ivWeatherIcon.setImageDrawable(null)
-        }
-    }
-
-    private fun loadWeatherIcon(iconCode: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val bitmap = WeatherIconStorage.loadIcon(requireContext(), iconCode)
-                withContext(Dispatchers.Main) {
-                    if (bitmap != null) {
-                        ivWeatherIcon.setImageBitmap(bitmap)
-                    } else {
-                        val iconUrl = "https://openweathermap.org/img/wn/${iconCode}@2x.png"
-                        Glide.with(this@ClockFragment)
-                            .load(iconUrl)
-                            .into(ivWeatherIcon)
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    val iconUrl = "https://openweathermap.org/img/wn/${iconCode}@2x.png"
-                    Glide.with(this@ClockFragment)
-                        .load(iconUrl)
-                        .into(ivWeatherIcon)
-                }
-            }
+    private fun loadWeatherIconWithGlide(iconCode: String) {
+        if (iconCode.isNotEmpty()) {
+            val iconUrl = "https://openweathermap.org/img/wn/${iconCode}@2x.png"
+            Glide.with(this)
+                .load(iconUrl)
+                .into(binding.ivWeatherIcon)
         }
     }
 
     private fun showWeatherError(message: String) {
-        tvWeatherDescription.text = message
-        tvWeatherDescription.setTextColor(ContextCompat.getColor(requireContext(), R.color.error))
-    }
+        binding.tvWeatherDescription.text = message
+        binding.tvWeatherDescription.setTextColor(
+            androidx.core.content.ContextCompat.getColor(requireContext(), R.color.error)
+        )
 
-    private fun showWeatherProgress() {
-        weatherProgressBar.visibility = View.VISIBLE
-        weatherCard.alpha = 0.6f
-    }
-
-    private fun hideWeatherProgress() {
-        weatherProgressBar.visibility = View.GONE
-        weatherCard.alpha = 1.0f
-    }
-
-    private fun loadWeatherFromStorage() {
-        lastLatitude = sharedPreferences.getFloat("last_lat", 0f).toDouble()
-        lastLongitude = sharedPreferences.getFloat("last_lon", 0f).toDouble()
-        lastWeatherUpdateTime = sharedPreferences.getLong("last_update", 0)
-        cachedLocationName = sharedPreferences.getString("location_name", null)
-
-        val city = sharedPreferences.getString("weather_city", null)
-        val temp = sharedPreferences.getFloat("weather_temp", -1000f)
-        val humidity = sharedPreferences.getInt("weather_humidity", 0)
-        val desc = sharedPreferences.getString("weather_desc", "")
-        val icon = sharedPreferences.getString("weather_icon", "")
-
-        if (city != null && temp > -1000f) {
-            cachedWeatherData = WeatherResponse(
-                cityName = city,
-                main = com.euktop.studentalarm.weather.Main(
-                    temperature = temp.toDouble(),
-                    humidity = humidity,
-                    feelsLike = 0.0,
-                    pressure = 1013
-                ),
-                weather = listOf(com.euktop.studentalarm.weather.Weather(desc ?: "", icon ?: ""))
-            )
-        }
-    }
-
-    private fun saveWeatherToStorage() {
-        sharedPreferences.edit().apply {
-            putFloat("last_lat", lastLatitude.toFloat())
-            putFloat("last_lon", lastLongitude.toFloat())
-            putLong("last_update", lastWeatherUpdateTime)
-            cachedLocationName?.let { putString("location_name", it) }
-            cachedWeatherData?.let { weather ->
-                putString("weather_city", weather.cityName)
-                putFloat("weather_temp", weather.main.temperature.toFloat())
-                putInt("weather_humidity", weather.main.humidity)
-                weather.weather.firstOrNull()?.let { w ->
-                    putString("weather_desc", w.description)
-                    putString("weather_icon", w.icon)
-                }
+        // Показываем последние кешированные данные, если есть
+        weatherViewModel.weatherState.value?.let { state ->
+            if (state is WeatherState.Success) {
+                displayWeather(state.weather)
             }
-            apply()
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (!isClockUpdating) {
-            startClockUpdates()
-        }
-        loadWeatherFromStorage()
-        displayCachedWeather()
     }
 
     override fun onPause() {
         super.onPause()
-        stopClockUpdates()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        clockViewModel.stopClock()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        clockViewModel.startClock()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        stopClockUpdates()
-        clockHandler.removeCallbacksAndMessages(null)
-    }
-
-    private fun startClockUpdates() {
-        if (isClockUpdating) return
-        isClockUpdating = true
-        updateClock()
-        clockHandler.post(clockUpdateRunnable)
-    }
-
-    private fun stopClockUpdates() {
-        isClockUpdating = false
-        clockHandler.removeCallbacks(clockUpdateRunnable)
-    }
-
-    private fun updateClock() {
-        val now = System.currentTimeMillis()
-        val timeStr = timeFormat.format(Date(now))
-        val millisStr = millisFormat.format(Date(now))
-        val fullTimeStr = "$timeStr.$millisStr"
-        val dateStr = dateFormat.format(Date(now))
-        val dayStr = dayFormat.format(Date(now))
-        tvTime.text = fullTimeStr
-        tvDate.text = dateStr
-        tvDayOfWeek.text = dayStr
+        _binding = null
     }
 }
