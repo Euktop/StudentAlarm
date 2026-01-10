@@ -1,14 +1,13 @@
 // app/src/main/java/com/euktop/studentalarm/viewmodel/ViewModelFactory.kt
 package com.euktop.studentalarm.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.euktop.studentalarm.data.AlarmRepository
 
 class ViewModelFactory(
     private val repository: AlarmRepository,
-    private val context: Context
+    private val context: android.content.Context
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
