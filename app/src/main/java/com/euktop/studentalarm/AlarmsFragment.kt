@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.euktop.studentalarm.databinding.FragmentAlarmsBinding
 import com.euktop.studentalarm.viewmodel.AlarmsViewModel
+import com.euktop.studentalarm.viewmodel.AlarmsUiState
 import com.euktop.studentalarm.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -30,8 +31,6 @@ class AlarmsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var adapter: AlarmRecyclerAdapter
-
-    // Добавляем ViewModel
     private lateinit var viewModel: AlarmsViewModel
 
     private var isFabHidden = false
@@ -48,15 +47,11 @@ class AlarmsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Инициализируем ViewModel
         initViewModel()
-
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
         setupScrollListenerWithTranslation()
-        setupSelectionListeners()
     }
 
     private fun initViewModel() {
@@ -71,18 +66,51 @@ class AlarmsFragment : Fragment() {
             adapter.updateAlarms(alarms)
             binding.emptyStateTextView.visibility =
                 if (alarms.isEmpty()) View.VISIBLE else View.GONE
+
+            // Обновляем состояние кнопки "Выбрать все"
+            updateSelectAllButton(alarms)
+        }
+
+        // Наблюдаем за выбранными будильниками
+        viewModel.selectedAlarms.observe(viewLifecycleOwner) { selectedIds ->
+            adapter.selectedIds = selectedIds
+            binding.tvSelectedCount.text = getString(R.string.selected, selectedIds.size)
+
+            // Обновляем состояние кнопки "Выбрать все"
+            viewModel.alarms.value?.let { alarms ->
+                updateSelectAllButton(alarms)
+            }
         }
 
         // Наблюдаем за состоянием UI (режим выбора)
         viewModel.uiState.observe(viewLifecycleOwner) { uiState ->
             when (uiState) {
-                is com.euktop.studentalarm.viewmodel.AlarmsUiState.Normal -> {
-                    // Пока оставляем старую логику, перенесем в следующем шаге
+                is AlarmsUiState.Normal -> {
+                    adapter.isSelectionMode = false
+                    hideSelectionMode()
                 }
-                is com.euktop.studentalarm.viewmodel.AlarmsUiState.Selection -> {
-                    // Пока оставляем старую логику, перенесем в следующем шаге
+                is AlarmsUiState.Selection -> {
+                    adapter.isSelectionMode = true
+                    showSelectionMode()
+                }
+                // Добавляем else ветку для exhaustiveness
+                else -> {
+                    // Не должно происходить, но для безопасности
+                    adapter.isSelectionMode = false
+                    hideSelectionMode()
                 }
             }
+        }
+    }
+
+    private fun updateSelectAllButton(alarms: List<Alarm>) {
+        val allIds = alarms.map { it.id }
+        val isAllSelected = viewModel.isAllSelected(allIds)
+
+        if (isAllSelected) {
+            binding.btnToggleSelectAll.contentDescription = getString(R.string.deselect_all)
+        } else {
+            binding.btnToggleSelectAll.contentDescription = getString(R.string.select_all)
         }
     }
 
@@ -111,33 +139,22 @@ class AlarmsFragment : Fragment() {
             )
         }
 
-        // Обработка переключения вкл/выкл будильника - используем ViewModel
+        // Обработка переключения вкл/выкл будильника
         adapter.onSwitchChanged = { alarm, isChecked ->
             viewModel.toggleAlarmEnabled(alarm.id, isChecked)
         }
 
+        // Обработка выбора будильника (в режиме выбора)
+        adapter.onAlarmSelected = { alarmId ->
+            viewModel.toggleAlarmSelection(alarmId)
+        }
+
+        // Обработка запроса на вход в режим выбора (долгое нажатие)
+        adapter.onSelectionModeRequested = {
+            viewModel.enterSelectionMode()
+        }
+
         binding.recyclerView.adapter = adapter
-    }
-
-    // Остальные методы пока оставляем без изменений (пока)
-    private fun setupSelectionListeners() {
-        adapter.onSelectionModeChanged = { isSelectionMode ->
-            if (isSelectionMode) {
-                showSelectionMode()
-            } else {
-                hideSelectionMode()
-            }
-        }
-
-        adapter.onSelectedCountChanged = { count ->
-            binding.tvSelectedCount.text = getString(R.string.selected, count)
-
-            if (adapter.isAllSelected()) {
-                binding.btnToggleSelectAll.contentDescription = getString(R.string.deselect_all)
-            } else {
-                binding.btnToggleSelectAll.contentDescription = getString(R.string.select_all)
-            }
-        }
     }
 
     private fun setupScrollListenerWithTranslation() {
@@ -153,7 +170,7 @@ class AlarmsFragment : Fragment() {
                 val canScrollUp = recyclerView.canScrollVertically(-1)
                 isAtTop = !canScrollUp
 
-                if (adapter.isSelectionMode()) {
+                if (adapter.isSelectionMode) {
                     return
                 }
 
@@ -240,14 +257,17 @@ class AlarmsFragment : Fragment() {
         }
 
         binding.btnCloseSelection.setOnClickListener {
-            adapter.exitSelectionMode()
+            viewModel.exitSelectionMode()
         }
 
         binding.btnToggleSelectAll.setOnClickListener {
-            if (adapter.isAllSelected()) {
-                adapter.deselectAll()
-            } else {
-                adapter.selectAll()
+            viewModel.alarms.value?.let { alarms ->
+                val allIds = alarms.map { it.id }
+                if (viewModel.isAllSelected(allIds)) {
+                    viewModel.clearSelection()
+                } else {
+                    viewModel.selectAll(allIds)
+                }
             }
         }
 
@@ -290,25 +310,17 @@ class AlarmsFragment : Fragment() {
     }
 
     private fun deleteSelectedAlarms() {
-        val selectedAlarms = adapter.getSelectedAlarms()
-        if (selectedAlarms.isEmpty()) {
-            adapter.exitSelectionMode()
+        val selectedCount = viewModel.selectedAlarms.value?.size ?: 0
+        if (selectedCount == 0) {
+            viewModel.exitSelectionMode()
             return
         }
 
-        val count = selectedAlarms.size
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.delete_alarm))
-            .setMessage(getString(R.string.delete_alarms, count))
+            .setMessage(getString(R.string.delete_alarms, selectedCount))
             .setPositiveButton(getString(R.string.delete)) { dialog, _ ->
-                lifecycleScope.launch {
-                    selectedAlarms.forEach { alarm ->
-                        // Временно используем старый подход, перенесем в следующем шаге
-                        val app = requireActivity().application as AlarmApplication
-                        app.alarmRepository.deleteAlarm(alarm)
-                    }
-                    adapter.exitSelectionMode()
-                }
+                viewModel.deleteSelectedAlarms()
                 dialog.dismiss()
             }
             .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
@@ -324,8 +336,8 @@ class AlarmsFragment : Fragment() {
         requireView().requestFocus()
         requireView().setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                if (adapter.isSelectionMode()) {
-                    adapter.exitSelectionMode()
+                if (viewModel.uiState.value is AlarmsUiState.Selection) {
+                    viewModel.exitSelectionMode()
                     return@setOnKeyListener true
                 }
             }

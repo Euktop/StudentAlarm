@@ -13,10 +13,10 @@ class AlarmsViewModel(
     private val repository: AlarmRepository
 ) : ViewModel() {
 
-    // LiveData для списка будильников (будем использовать Flow)
+    // LiveData для списка будильников
     val alarms = repository.getAllAlarms().asLiveData()
 
-    // Состояние UI
+    // Состояние UI (режим выбора)
     private val _uiState = MutableLiveData<AlarmsUiState>(AlarmsUiState.Normal)
     val uiState: LiveData<AlarmsUiState> = _uiState
 
@@ -32,26 +32,6 @@ class AlarmsViewModel(
             alarm?.let {
                 repository.updateAlarm(it.copy(isEnabled = enabled))
             }
-        }
-    }
-
-    fun deleteAlarm(alarmId: Long) {
-        viewModelScope.launch {
-            val alarm = repository.getAlarmById(alarmId)
-            alarm?.let {
-                repository.deleteAlarm(it)
-            }
-        }
-    }
-
-    fun deleteSelectedAlarms() {
-        viewModelScope.launch {
-            val selectedIds = _selectedAlarms.value ?: emptySet()
-            selectedIds.forEach { alarmId ->
-                val alarm = repository.getAlarmById(alarmId)
-                alarm?.let { repository.deleteAlarm(it) }
-            }
-            exitSelectionMode()
         }
     }
 
@@ -75,18 +55,39 @@ class AlarmsViewModel(
             currentSelection.add(alarmId)
         }
         _selectedAlarms.value = currentSelection
+
+        // Если ничего не выбрано - выходим из режима выбора
+        if (currentSelection.isEmpty()) {
+            exitSelectionMode()
+        }
     }
 
-    fun selectAllAlarms(allAlarmIds: List<Long>) {
-        _selectedAlarms.value = allAlarmIds.toSet()
+    fun selectAll(alarmIds: List<Long>) {
+        _selectedAlarms.value = alarmIds.toSet()
     }
 
     fun clearSelection() {
         _selectedAlarms.value = emptySet()
     }
+
+    fun deleteSelectedAlarms() {
+        viewModelScope.launch {
+            val selectedIds = _selectedAlarms.value ?: emptySet()
+            selectedIds.forEach { alarmId ->
+                val alarm = repository.getAlarmById(alarmId)
+                alarm?.let { repository.deleteAlarm(it) }
+            }
+            exitSelectionMode()
+        }
+    }
+
+    fun isAllSelected(allAlarmIds: List<Long>): Boolean {
+        val selected = _selectedAlarms.value ?: emptySet()
+        return selected.size == allAlarmIds.size && allAlarmIds.isNotEmpty()
+    }
 }
 
-// Состояния UI для экрана списка будильников
+// Выносим sealed class отдельно или оставляем внутри, но делаем public
 sealed class AlarmsUiState {
     object Normal : AlarmsUiState()
     object Selection : AlarmsUiState()
