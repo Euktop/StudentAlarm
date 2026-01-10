@@ -1,3 +1,4 @@
+// app/src/main/java/com/euktop/studentalarm/AlarmsFragment.kt
 package com.euktop.studentalarm
 
 import android.os.Bundle
@@ -18,6 +19,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.euktop.studentalarm.databinding.FragmentAlarmsBinding
+import com.euktop.studentalarm.viewmodel.AlarmsViewModel
+import com.euktop.studentalarm.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -27,7 +30,9 @@ class AlarmsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var adapter: AlarmRecyclerAdapter
-    private lateinit var viewModel: AlarmViewModel
+
+    // Добавляем ViewModel
+    private lateinit var viewModel: AlarmsViewModel
 
     private var isFabHidden = false
     private var isAnimating = false
@@ -43,7 +48,10 @@ class AlarmsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupViewModel()
+
+        // Инициализируем ViewModel
+        initViewModel()
+
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
@@ -51,12 +59,67 @@ class AlarmsFragment : Fragment() {
         setupSelectionListeners()
     }
 
-    private fun setupViewModel() {
+    private fun initViewModel() {
         val app = requireActivity().application as AlarmApplication
-        val viewModelFactory = ViewModelFactory(app.alarmRepository, requireContext())
-        viewModel = ViewModelProvider(this, viewModelFactory)[AlarmViewModel::class.java]
+        val factory = ViewModelFactory(app.alarmRepository, requireContext())
+        viewModel = ViewModelProvider(this, factory)[AlarmsViewModel::class.java]
     }
 
+    private fun setupObservers() {
+        // Наблюдаем за списком будильников из ViewModel
+        viewModel.alarms.observe(viewLifecycleOwner) { alarms ->
+            adapter.updateAlarms(alarms)
+            binding.emptyStateTextView.visibility =
+                if (alarms.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        // Наблюдаем за состоянием UI (режим выбора)
+        viewModel.uiState.observe(viewLifecycleOwner) { uiState ->
+            when (uiState) {
+                is com.euktop.studentalarm.viewmodel.AlarmsUiState.Normal -> {
+                    // Пока оставляем старую логику, перенесем в следующем шаге
+                }
+                is com.euktop.studentalarm.viewmodel.AlarmsUiState.Selection -> {
+                    // Пока оставляем старую логику, перенесем в следующем шаге
+                }
+            }
+        }
+    }
+
+    private fun setupRecyclerView() {
+        adapter = AlarmRecyclerAdapter(requireContext())
+
+        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerView.addItemDecoration(
+            DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
+        )
+
+        // Обработка клика на будильник (переход к редактированию)
+        adapter.onItemClick = { alarm ->
+            val bundle = Bundle().apply {
+                putLong("alarmId", alarm.id)
+            }
+            findNavController().navigate(
+                R.id.action_alarmsFragment_to_alarmEditFragment,
+                bundle,
+                NavOptions.Builder()
+                    .setEnterAnim(R.anim.slide_in_bottom)
+                    .setExitAnim(android.R.anim.fade_out)
+                    .setPopEnterAnim(android.R.anim.fade_in)
+                    .setPopExitAnim(R.anim.slide_out_bottom)
+                    .build()
+            )
+        }
+
+        // Обработка переключения вкл/выкл будильника - используем ViewModel
+        adapter.onSwitchChanged = { alarm, isChecked ->
+            viewModel.toggleAlarmEnabled(alarm.id, isChecked)
+        }
+
+        binding.recyclerView.adapter = adapter
+    }
+
+    // Остальные методы пока оставляем без изменений (пока)
     private fun setupSelectionListeners() {
         adapter.onSelectionModeChanged = { isSelectionMode ->
             if (isSelectionMode) {
@@ -159,45 +222,6 @@ class AlarmsFragment : Fragment() {
             .start()
     }
 
-    private fun setupRecyclerView() {
-        adapter = AlarmRecyclerAdapter(requireContext())
-
-        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerView.addItemDecoration(
-            DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
-        )
-
-        adapter.onItemClick = { alarm ->
-            val bundle = Bundle().apply {
-                putLong("alarmId", alarm.id)
-            }
-            findNavController().navigate(
-                R.id.action_alarmsFragment_to_alarmEditFragment,
-                bundle,
-                NavOptions.Builder()
-                    .setEnterAnim(R.anim.slide_in_bottom)
-                    .setExitAnim(android.R.anim.fade_out)
-                    .setPopEnterAnim(android.R.anim.fade_in)
-                    .setPopExitAnim(R.anim.slide_out_bottom)
-                    .build()
-            )
-        }
-        adapter.onSwitchChanged = { alarm, isChecked ->
-            lifecycleScope.launch {
-                viewModel.updateAlarm(alarm.copy(isEnabled = isChecked))
-            }
-        }
-        binding.recyclerView.adapter = adapter
-    }
-
-    private fun setupObservers() {
-        viewModel.allAlarms.observe(viewLifecycleOwner) { alarms ->
-            adapter.updateAlarms(alarms)
-            binding.emptyStateTextView.visibility =
-                if (alarms.isEmpty()) View.VISIBLE else View.GONE
-        }
-    }
-
     private fun setupClickListeners() {
         binding.fabAddAlarm.setOnClickListener {
             val bundle = Bundle().apply {
@@ -279,7 +303,9 @@ class AlarmsFragment : Fragment() {
             .setPositiveButton(getString(R.string.delete)) { dialog, _ ->
                 lifecycleScope.launch {
                     selectedAlarms.forEach { alarm ->
-                        viewModel.deleteAlarm(alarm)
+                        // Временно используем старый подход, перенесем в следующем шаге
+                        val app = requireActivity().application as AlarmApplication
+                        app.alarmRepository.deleteAlarm(alarm)
                     }
                     adapter.exitSelectionMode()
                 }
