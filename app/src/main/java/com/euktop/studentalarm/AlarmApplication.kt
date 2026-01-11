@@ -1,8 +1,8 @@
 package com.euktop.studentalarm
 
 import android.app.Application
-import com.euktop.studentalarm.data.AlarmRepository
-import com.euktop.studentalarm.data.AppDatabase
+import com.euktop.studentalarm.data.repository.AlarmRepository
+import com.euktop.studentalarm.data.database.AppDatabase
 
 class AlarmApplication : Application() {
 

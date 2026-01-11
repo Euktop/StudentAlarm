@@ -1,5 +1,4 @@
-// app/src/main/java/com/euktop/studentalarm/AlarmsFragment.kt
-package com.euktop.studentalarm
+package com.euktop.studentalarm.ui.alarms
 
 import android.os.Bundle
 import android.view.KeyEvent
@@ -12,17 +11,19 @@ import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.euktop.studentalarm.AlarmApplication
+import com.euktop.studentalarm.ui.alarms.AlarmRecyclerAdapter
+import com.euktop.studentalarm.R
+import com.euktop.studentalarm.data.model.Alarm
 import com.euktop.studentalarm.databinding.FragmentAlarmsBinding
-import com.euktop.studentalarm.viewmodel.AlarmsViewModel
 import com.euktop.studentalarm.viewmodel.AlarmsUiState
+import com.euktop.studentalarm.viewmodel.AlarmsViewModel
 import com.euktop.studentalarm.viewmodel.ViewModelFactory
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 class AlarmsFragment : Fragment() {

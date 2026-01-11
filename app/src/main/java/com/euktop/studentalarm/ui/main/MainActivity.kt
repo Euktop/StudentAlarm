@@ -1,25 +1,35 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.ui.main
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.NavController
-import androidx.navigation.NavOptions
-import androidx.navigation.fragment.NavHostFragment
-import com.euktop.studentalarm.databinding.ActivityMainBinding
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
+import androidx.core.view.size
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.NavHostFragment
+import com.euktop.studentalarm.AlarmApplication
+import com.euktop.studentalarm.R
+import com.euktop.studentalarm.databinding.ActivityMainBinding
+import com.euktop.studentalarm.service.alarm.AlarmScheduler
+import com.euktop.studentalarm.utils.animation.AnimatorHelper
+import com.euktop.studentalarm.utils.permission.PermissionManager
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import androidx.core.view.size
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
-    private lateinit var frameNameTextView: android.widget.TextView
+    private lateinit var frameNameTextView: TextView
     private lateinit var binding: ActivityMainBinding
     private lateinit var bottomNavigationView: BottomNavigationView
 
@@ -38,7 +48,7 @@ class MainActivity : AppCompatActivity() {
         if (!PermissionManager.hasAllAlarmPermissions(this)) {
             PermissionManager.checkAndRequestPermissions(this) {
                 lifecycleScope.launch {
-                    kotlinx.coroutines.delay(1000)
+                    delay(1000)
                     if (!hasCheckedMissedAlarms) {
                         checkMissedAlarmsOnStart()
                         hasCheckedMissedAlarms = true
@@ -47,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             lifecycleScope.launch {
-                kotlinx.coroutines.delay(1000)
+                delay(1000)
                 if (!hasCheckedMissedAlarms) {
                     checkMissedAlarmsOnStart()
                     hasCheckedMissedAlarms = true
@@ -151,7 +161,7 @@ class MainActivity : AppCompatActivity() {
         checkPermissionsAndDisableAlarms()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         when (requestCode) {
@@ -234,7 +244,7 @@ class MainActivity : AppCompatActivity() {
                 direction = AnimatorHelper.Direction.UP,
                 duration = duration,
                 onStart = {
-                    binding.bottomNavContainer.visibility = android.view.View.VISIBLE
+                    binding.bottomNavContainer.visibility = View.VISIBLE
                 },
                 onEnd = {
                     isBottomNavAnimating = false
@@ -249,7 +259,7 @@ class MainActivity : AppCompatActivity() {
                 onStart = {
                 },
                 onEnd = {
-                    binding.bottomNavContainer.visibility = android.view.View.GONE
+                    binding.bottomNavContainer.visibility = View.GONE
                     isBottomNavAnimating = false
                     isBottomNavVisible = false
                 }
@@ -258,7 +268,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBackPressedHandler() {
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val currentDestination = navController.currentDestination?.id
 

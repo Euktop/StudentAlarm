@@ -1,5 +1,4 @@
-// app/src/main/java/com/euktop/studentalarm/AlarmEditFragment.kt
-package com.euktop.studentalarm
+package com.euktop.studentalarm.ui.alarm_edit
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -9,20 +8,24 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.euktop.studentalarm.AlarmApplication
+import com.euktop.studentalarm.ui.main.MainActivity
+import com.euktop.studentalarm.R
 import com.euktop.studentalarm.databinding.FragmentAlarmEditBinding
+import com.euktop.studentalarm.utils.animation.AnimatorHelper
+import com.euktop.studentalarm.utils.permission.PermissionManager
 import com.euktop.studentalarm.viewmodel.AlarmEditViewModel
 import com.euktop.studentalarm.viewmodel.UiMessage
 import com.euktop.studentalarm.viewmodel.ViewModelFactory
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import kotlinx.coroutines.launch
 
 class AlarmEditFragment : Fragment() {
     private var _binding: FragmentAlarmEditBinding? = null
@@ -260,8 +263,8 @@ class AlarmEditFragment : Fragment() {
 
         val editText = dialogView.findViewById<EditText>(R.id.editTextDescription)
         val tvCharCount = dialogView.findViewById<TextView>(R.id.tvCharCount)
-        val btnOk = dialogView.findViewById<android.widget.Button>(R.id.btnDescriptionDialogOk)
-        val btnCancel = dialogView.findViewById<android.widget.Button>(R.id.btnDescriptionDialogCancel)
+        val btnOk = dialogView.findViewById<Button>(R.id.btnDescriptionDialogOk)
+        val btnCancel = dialogView.findViewById<Button>(R.id.btnDescriptionDialogCancel)
 
         editText.setText(state.description)
 

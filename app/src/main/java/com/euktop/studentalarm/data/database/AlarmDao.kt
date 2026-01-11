@@ -1,4 +1,4 @@
-package com.euktop.studentalarm.data
+package com.euktop.studentalarm.data.database
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

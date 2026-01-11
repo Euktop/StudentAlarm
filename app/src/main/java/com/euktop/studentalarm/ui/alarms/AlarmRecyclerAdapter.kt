@@ -1,6 +1,7 @@
-// app/src/main/java/com/euktop/studentalarm/AlarmRecyclerAdapter.kt
-package com.euktop.studentalarm
+package com.euktop.studentalarm.ui.alarms
 
+import android.app.Activity
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,9 +10,13 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.euktop.studentalarm.ui.main.MainActivity
+import com.euktop.studentalarm.R
+import com.euktop.studentalarm.data.model.Alarm
+import com.euktop.studentalarm.utils.permission.PermissionManager
 
 class AlarmRecyclerAdapter(
-    private val context: android.content.Context
+    private val context: Context
 ) : RecyclerView.Adapter<AlarmRecyclerAdapter.ViewHolder>() {
 
     // Внутренний список будильников
@@ -147,7 +152,7 @@ class AlarmRecyclerAdapter(
     }
 
     private fun showPermissionsRequiredDialog() {
-        if (context is android.app.Activity) {
+        if (context is Activity) {
             val activity = context
             if (activity is MainActivity) {
                 activity.checkPermissionsAndExecute {

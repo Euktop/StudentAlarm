@@ -1,4 +1,4 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.service.alarm
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.euktop.studentalarm.data.model.Alarm
+import com.euktop.studentalarm.R
 
 class AlarmAdapter(
     private val alarms: List<Alarm>,

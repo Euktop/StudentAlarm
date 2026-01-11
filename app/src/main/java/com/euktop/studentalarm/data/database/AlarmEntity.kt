@@ -1,9 +1,9 @@
-package com.euktop.studentalarm.data
+package com.euktop.studentalarm.data.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.euktop.studentalarm.Alarm
+import com.euktop.studentalarm.data.model.Alarm
 
 @Entity(tableName = "alarms")
 data class AlarmEntity(

@@ -1,6 +1,7 @@
-package com.euktop.studentalarm.data
+package com.euktop.studentalarm.data.repository
 
-import com.euktop.studentalarm.Alarm
+import com.euktop.studentalarm.data.model.Alarm
+import com.euktop.studentalarm.data.database.AlarmDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

@@ -36,7 +36,7 @@
         tools:ignore="DataExtractionRules">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -50,7 +50,7 @@
         </activity>
 
         <activity
-            android:name=".AlarmActivity"
+            android:name=".service.alarm.AlarmActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:showWhenLocked="true"
@@ -65,7 +65,7 @@
         </activity>
 
         <receiver
-            android:name=".AlarmReceiver"
+            android:name=".service.alarm.AlarmReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -77,7 +77,7 @@
         </receiver>
 
         <receiver
-            android:name=".BootReceiver"
+            android:name=".service.alarm.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -92,7 +92,7 @@
         </receiver>
 
         <receiver
-            android:name=".TimeChangeReceiver"
+            android:name=".service.alarm.TimeChangeReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -103,7 +103,7 @@
         </receiver>
 
         <service
-            android:name=".AlarmCheckService"
+            android:name=".service.alarm.AlarmCheckService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />

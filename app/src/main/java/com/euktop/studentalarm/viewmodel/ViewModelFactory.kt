@@ -4,7 +4,7 @@ package com.euktop.studentalarm.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.euktop.studentalarm.data.AlarmRepository
+import com.euktop.studentalarm.data.repository.AlarmRepository
 import com.euktop.studentalarm.data.repository.WeatherRepository
 import com.euktop.studentalarm.weather.WeatherRetrofitClient
 

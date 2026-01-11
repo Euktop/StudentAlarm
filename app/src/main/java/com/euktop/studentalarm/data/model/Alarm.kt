@@ -1,8 +1,9 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.data.model
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.euktop.studentalarm.data.AlarmEntity
+import com.euktop.studentalarm.R
+import com.euktop.studentalarm.data.database.AlarmEntity
 
 data class Alarm(
     val id: Long = 0,

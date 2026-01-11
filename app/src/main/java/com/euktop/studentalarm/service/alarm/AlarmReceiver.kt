@@ -1,8 +1,10 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.service.alarm
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.euktop.studentalarm.service.alarm.AlarmActivity
+import com.euktop.studentalarm.AlarmApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +26,6 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         val allAlarmIds = longArrayOf(alarmId)
-        AlarmActivity.startAlarm(context, allAlarmIds)
+        AlarmActivity.Companion.startAlarm(context, allAlarmIds)
     }
 }

@@ -1,8 +1,9 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.service.alarm
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.euktop.studentalarm.AlarmApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

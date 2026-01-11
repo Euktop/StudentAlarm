@@ -1,10 +1,11 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.utils.animation
 
 import android.animation.ObjectAnimator
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.view.isGone
+import com.euktop.studentalarm.R
 
 object AnimatorHelper {
 

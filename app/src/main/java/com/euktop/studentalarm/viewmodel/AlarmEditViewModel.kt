@@ -6,9 +6,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.euktop.studentalarm.R
-import com.euktop.studentalarm.data.AlarmRepository
-import com.euktop.studentalarm.Alarm
-import com.euktop.studentalarm.AlarmScheduler
+import com.euktop.studentalarm.data.repository.AlarmRepository
+import com.euktop.studentalarm.data.model.Alarm
+import com.euktop.studentalarm.service.alarm.AlarmScheduler
 import kotlinx.coroutines.launch
 import java.util.Calendar
 

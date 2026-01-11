@@ -1,12 +1,15 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.utils.permission
 
 import android.app.Activity
+import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
+import com.euktop.studentalarm.R
 
 object PermissionManager {
 
@@ -18,7 +21,7 @@ object PermissionManager {
 
     fun canScheduleExactAlarms(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             alarmManager.canScheduleExactAlarms()
         } else {
             true
@@ -71,7 +74,7 @@ object PermissionManager {
 
         val permissionsText = missingPermissions.joinToString("\n• ")
 
-        androidx.appcompat.app.AlertDialog.Builder(activity)
+        AlertDialog.Builder(activity)
             .setTitle(activity.getString(R.string.permissions_required))
             .setMessage(activity.getString(R.string.permissions_dialog_message, permissionsText))
             .setPositiveButton(activity.getString(R.string.settings)) { _, _ ->
@@ -106,7 +109,7 @@ object PermissionManager {
     fun openAppSettings(activity: Activity) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = "package:${activity.packageName}".toUri()
+                setData("package:${activity.packageName}".toUri())
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             activity.startActivity(intent)

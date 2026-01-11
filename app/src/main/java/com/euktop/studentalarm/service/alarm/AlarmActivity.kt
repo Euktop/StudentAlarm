@@ -1,5 +1,9 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.service.alarm
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
@@ -7,11 +11,15 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import com.euktop.studentalarm.AlarmApplication
+import com.euktop.studentalarm.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,7 +42,7 @@ class AlarmActivity : AppCompatActivity() {
 
             val intent = Intent(context, AlarmActivity::class.java).apply {
                 putExtra("all_alarm_ids", alarmIds)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
 
             try {
@@ -50,55 +58,55 @@ class AlarmActivity : AppCompatActivity() {
         private fun showFullScreenNotification(context: Context, alarmIds: LongArray) {
             val activityIntent = Intent(context, AlarmActivity::class.java).apply {
                 putExtra("all_alarm_ids", alarmIds)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
 
             val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                android.app.PendingIntent.getActivity(
+                PendingIntent.getActivity(
                     context,
                     System.currentTimeMillis().toInt(),
                     activityIntent,
-                    android.app.PendingIntent.FLAG_IMMUTABLE or
-                            android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                    PendingIntent.FLAG_IMMUTABLE or
+                            PendingIntent.FLAG_UPDATE_CURRENT
                 )
             } else {
-                android.app.PendingIntent.getActivity(
+                PendingIntent.getActivity(
                     context,
                     System.currentTimeMillis().toInt(),
                     activityIntent,
-                    android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                    PendingIntent.FLAG_UPDATE_CURRENT
                 )
             }
 
             val notificationManager = context.getSystemService(NOTIFICATION_SERVICE)
-                    as android.app.NotificationManager
+                    as NotificationManager
 
-            val channel = android.app.NotificationChannel(
+            val channel = NotificationChannel(
                 "alarm_fullscreen_channel",
                 context.getString(R.string.alarms),
-                android.app.NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Alarm channel"
-                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setSound(null, null)
                 enableVibration(false)
                 setBypassDnd(true)
             }
             notificationManager.createNotificationChannel(channel)
 
-            val notification = androidx.core.app.NotificationCompat.Builder(
+            val notification = NotificationCompat.Builder(
                 context,
                 "alarm_fullscreen_channel"
             )
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setContentTitle("${context.getString(R.string.alarms)} ⏰")
                 .setContentText(context.getString(R.string.tap_to_dismiss))
-                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_MAX)
-                .setCategory(androidx.core.app.NotificationCompat.CATEGORY_ALARM)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setFullScreenIntent(pendingIntent, true)
                 .setAutoCancel(true)
                 .setOngoing(true)
-                .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .build()
 
             notificationManager.notify(9999, notification)
@@ -181,7 +189,8 @@ class AlarmActivity : AppCompatActivity() {
             if (isAlarmRunning) return
 
             vibrator = getSystemService(Vibrator::class.java)
-            vibrator?.vibrate(android.os.VibrationEffect.createWaveform(
+            vibrator?.vibrate(
+                VibrationEffect.createWaveform(
                 longArrayOf(0, 667, 333, 667), 0
             ))
 
@@ -217,7 +226,7 @@ class AlarmActivity : AppCompatActivity() {
         resetAlarmState()
 
         val notificationManager = getSystemService(NOTIFICATION_SERVICE)
-                as android.app.NotificationManager
+                as NotificationManager
         notificationManager.cancel(9999)
 
         finish()

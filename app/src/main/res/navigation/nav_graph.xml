@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/alarmsFragment"
-        android:name="com.euktop.studentalarm.AlarmsFragment"
+        android:name="com.euktop.studentalarm.ui.alarms.AlarmsFragment"
         android:label="Будильники"
         tools:layout="@layout/fragment_alarms">
 
@@ -19,13 +19,13 @@
 
     <fragment
         android:id="@+id/clockFragment"
-        android:name="com.euktop.studentalarm.ClockFragment"
+        android:name="com.euktop.studentalarm.ui.clock.ClockFragment"
         android:label="@string/clock"
         tools:layout="@layout/fragment_clock" />
 
     <fragment
         android:id="@+id/alarmEditFragment"
-        android:name="com.euktop.studentalarm.AlarmEditFragment"
+        android:name="com.euktop.studentalarm.ui.alarm_edit.AlarmEditFragment"
         android:label="Редактирование будильника">
 
         <action

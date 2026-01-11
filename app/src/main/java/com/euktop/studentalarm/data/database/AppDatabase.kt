@@ -1,4 +1,4 @@
-package com.euktop.studentalarm.data
+package com.euktop.studentalarm.data.database
 
 import android.content.Context
 import androidx.room.Database

@@ -1,21 +1,21 @@
-// app/src/main/java/com/euktop/studentalarm/ClockFragment.kt
-package com.euktop.studentalarm
+package com.euktop.studentalarm.ui.clock
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.euktop.studentalarm.AlarmApplication
+import com.euktop.studentalarm.R
+import com.euktop.studentalarm.data.repository.WeatherUI
 import com.euktop.studentalarm.databinding.FragmentClockBinding
 import com.euktop.studentalarm.viewmodel.ClockViewModel
-import com.euktop.studentalarm.viewmodel.WeatherViewModel
 import com.euktop.studentalarm.viewmodel.ViewModelFactory
 import com.euktop.studentalarm.viewmodel.WeatherState
-import com.euktop.studentalarm.weather.WeatherIconStorage
-import kotlinx.coroutines.launch
+import com.euktop.studentalarm.viewmodel.WeatherViewModel
 
 class ClockFragment : Fragment() {
 
@@ -111,7 +111,7 @@ class ClockFragment : Fragment() {
         binding.weatherCard.alpha = 1.0f
     }
 
-    private fun displayWeather(weather: com.euktop.studentalarm.data.repository.WeatherUI) {
+    private fun displayWeather(weather: WeatherUI) {
         binding.tvWeatherCity.text = weather.city
         binding.tvWeatherTemp.text = weather.temperature
         binding.tvWeatherDescription.text = weather.description
@@ -139,7 +139,7 @@ class ClockFragment : Fragment() {
     private fun showWeatherError(message: String) {
         binding.tvWeatherDescription.text = message
         binding.tvWeatherDescription.setTextColor(
-            androidx.core.content.ContextCompat.getColor(requireContext(), R.color.error)
+            ContextCompat.getColor(requireContext(), R.color.error)
         )
 
         // Показываем последние кешированные данные, если есть

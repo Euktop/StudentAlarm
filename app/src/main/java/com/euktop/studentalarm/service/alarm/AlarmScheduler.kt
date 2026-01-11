@@ -1,5 +1,6 @@
-package com.euktop.studentalarm
+package com.euktop.studentalarm.service.alarm
 
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -8,7 +9,13 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import com.euktop.studentalarm.data.AlarmRepository
+import com.euktop.studentalarm.data.model.Alarm
+import com.euktop.studentalarm.service.alarm.AlarmActivity
+import com.euktop.studentalarm.AlarmApplication
+import com.euktop.studentalarm.service.alarm.AlarmReceiver
+import com.euktop.studentalarm.R
+import com.euktop.studentalarm.data.repository.AlarmRepository
+import com.euktop.studentalarm.utils.permission.PermissionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -44,7 +51,7 @@ object AlarmScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (!alarmManager.canScheduleExactAlarms()) {
-                if (context is android.app.Activity) {
+                if (context is Activity) {
                     PermissionManager.requestScheduleExactAlarmPermission(context)
                 }
                 return
@@ -55,7 +62,7 @@ object AlarmScheduler {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("alarm_id", alarm.id)
             putExtra("alarm_description", alarm.description)
-            action = "ALARM_${alarm.id}"
+            setAction("ALARM_${alarm.id}")
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -121,9 +128,9 @@ object AlarmScheduler {
                 }
             }
 
-            if (!AlarmActivity.isAlarmActive()) {
+            if (!AlarmActivity.Companion.isAlarmActive()) {
                 val alarmIds = missedAlarms.map { it.id }.toLongArray()
-                AlarmActivity.startAlarm(context, alarmIds)
+                AlarmActivity.Companion.startAlarm(context, alarmIds)
             }
         }
     }
@@ -131,7 +138,7 @@ object AlarmScheduler {
     fun cancelAlarm(context: Context, alarmId: Long) {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("alarm_id", alarmId)
-            action = "ALARM_${alarmId}"
+            setAction("ALARM_${alarmId}")
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
