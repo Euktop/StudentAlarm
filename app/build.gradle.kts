@@ -82,4 +82,5 @@ dependencies {
 
     implementation(libs.play.services.maps)
     implementation(libs.places)
+    testImplementation(kotlin("test"))
 }
