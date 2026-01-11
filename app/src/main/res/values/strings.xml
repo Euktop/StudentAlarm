@@ -95,4 +95,7 @@
     <string name="enable_location_services">Please enable location services</string>
     <string name="location_permission_denied_forever">Location permission permanently denied. Please enable in app settings.</string>
     <string name="weather">Weather</string>
+    <string name="alarm_not_found">Alarm not found</string>
+    <string name="location_permission_required">Location permission required</string>
+    <string name="permissions_required_short">Permissions required</string>
 </resources>

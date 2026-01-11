@@ -1,4 +1,3 @@
-// app/src/main/java/com/euktop/studentalarm/viewmodel/AlarmsViewModel.kt
 package com.euktop.studentalarm.viewmodel
 
 import androidx.lifecycle.LiveData
@@ -7,35 +6,37 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.euktop.studentalarm.data.repository.AlarmRepository
+import com.euktop.studentalarm.service.alarm.IAlarmScheduler
 import kotlinx.coroutines.launch
 
 class AlarmsViewModel(
-    private val repository: AlarmRepository
+    private val repository: AlarmRepository,
+    private val alarmScheduler: IAlarmScheduler
 ) : ViewModel() {
 
-    // LiveData для списка будильников
     val alarms = repository.getAllAlarms().asLiveData()
 
-    // Состояние UI (режим выбора)
     private val _uiState = MutableLiveData<AlarmsUiState>(AlarmsUiState.Normal)
     val uiState: LiveData<AlarmsUiState> = _uiState
 
-    // Выбранные будильники
     private val _selectedAlarms = MutableLiveData<Set<Long>>(emptySet())
     val selectedAlarms: LiveData<Set<Long>> = _selectedAlarms
-
-    // Методы для управления будильниками
 
     fun toggleAlarmEnabled(alarmId: Long, enabled: Boolean) {
         viewModelScope.launch {
             val alarm = repository.getAlarmById(alarmId)
             alarm?.let {
-                repository.updateAlarm(it.copy(isEnabled = enabled))
+                val updatedAlarm = it.copy(isEnabled = enabled)
+                repository.updateAlarm(updatedAlarm)
+
+                if (enabled) {
+                    alarmScheduler.scheduleAlarm(updatedAlarm)
+                } else {
+                    alarmScheduler.cancelAlarm(alarmId)
+                }
             }
         }
     }
-
-    // Методы для режима выбора
 
     fun enterSelectionMode() {
         _uiState.value = AlarmsUiState.Selection
@@ -56,7 +57,6 @@ class AlarmsViewModel(
         }
         _selectedAlarms.value = currentSelection
 
-        // Если ничего не выбрано - выходим из режима выбора
         if (currentSelection.isEmpty()) {
             exitSelectionMode()
         }
@@ -75,7 +75,10 @@ class AlarmsViewModel(
             val selectedIds = _selectedAlarms.value ?: emptySet()
             selectedIds.forEach { alarmId ->
                 val alarm = repository.getAlarmById(alarmId)
-                alarm?.let { repository.deleteAlarm(it) }
+                alarm?.let {
+                    repository.deleteAlarm(it)
+                    alarmScheduler.cancelAlarm(alarmId)
+                }
             }
             exitSelectionMode()
         }
@@ -87,7 +90,6 @@ class AlarmsViewModel(
     }
 }
 
-// Выносим sealed class отдельно или оставляем внутри, но делаем public
 sealed class AlarmsUiState {
     object Normal : AlarmsUiState()
     object Selection : AlarmsUiState()

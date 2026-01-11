@@ -57,7 +57,7 @@ class AlarmsFragment : Fragment() {
 
     private fun initViewModel() {
         val app = requireActivity().application as AlarmApplication
-        val factory = ViewModelFactory(app.alarmRepository, requireContext())
+        val factory = ViewModelFactory(requireContext(), app.alarmRepository)
         viewModel = ViewModelProvider(this, factory)[AlarmsViewModel::class.java]
     }
 

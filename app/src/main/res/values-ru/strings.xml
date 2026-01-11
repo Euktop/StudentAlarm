@@ -95,4 +95,7 @@
     <string name="enable_location_services">Пожалуйста, включите службы геолокации</string>
     <string name="location_permission_denied_forever">Разрешение на геолокацию отклонено навсегда. Пожалуйста, включите в настройках приложения.</string>
     <string name="weather">Погода</string>
+    <string name="alarm_not_found">Будильник не найден</string>
+    <string name="location_permission_required">Требуется разрешение на определение местоположения</string>
+    <string name="permissions_required_short">Требуются разрешения</string>
 </resources>

@@ -49,17 +49,14 @@ class ClockFragment : Fragment() {
     }
 
     private fun initViewModels() {
-        // Для ClockViewModel не нужны параметры
         clockViewModel = ViewModelProvider(this)[ClockViewModel::class.java]
 
-        // Для WeatherViewModel нужна фабрика
         val app = requireActivity().application as AlarmApplication
-        val factory = ViewModelFactory(app.alarmRepository, requireContext())
+        val factory = ViewModelFactory(requireContext(), app.alarmRepository)
         weatherViewModel = ViewModelProvider(this, factory)[WeatherViewModel::class.java]
     }
 
     private fun setupObservers() {
-        // Наблюдаем за часами
         clockViewModel.currentTime.observe(viewLifecycleOwner) { time ->
             binding.tvTime.text = time
         }

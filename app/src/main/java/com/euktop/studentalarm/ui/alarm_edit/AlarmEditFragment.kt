@@ -14,18 +14,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.euktop.studentalarm.AlarmApplication
-import com.euktop.studentalarm.ui.main.MainActivity
 import com.euktop.studentalarm.R
 import com.euktop.studentalarm.databinding.FragmentAlarmEditBinding
+import com.euktop.studentalarm.ui.main.MainActivity
 import com.euktop.studentalarm.utils.animation.AnimatorHelper
 import com.euktop.studentalarm.utils.permission.PermissionManager
+import com.euktop.studentalarm.viewmodel.AlarmEditMessage
 import com.euktop.studentalarm.viewmodel.AlarmEditViewModel
-import com.euktop.studentalarm.viewmodel.UiMessage
 import com.euktop.studentalarm.viewmodel.ViewModelFactory
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import kotlinx.coroutines.launch
 
 class AlarmEditFragment : Fragment() {
     private var _binding: FragmentAlarmEditBinding? = null
@@ -34,7 +36,6 @@ class AlarmEditFragment : Fragment() {
     private lateinit var viewModel: AlarmEditViewModel
     private var alarmId: Long = 0L
 
-    // Флаги для предотвращения повторного открытия диалогов (временно оставляем)
     private var isTimePickerShowing = false
     private var isDaysDialogShowing = false
     private var isDescriptionDialogShowing = false
@@ -51,28 +52,21 @@ class AlarmEditFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Получаем alarmId из аргументов
         arguments?.let {
             alarmId = it.getLong("alarmId", 0L)
         }
 
-        // Инициализируем ViewModel
         val app = requireActivity().application as AlarmApplication
-        val factory = ViewModelFactory(app.alarmRepository, requireContext())
+        val factory = ViewModelFactory(requireContext(), app.alarmRepository)
         viewModel = ViewModelProvider(this, factory)[AlarmEditViewModel::class.java]
 
-        // Настраиваем UI
         setupUI()
-
-        // Настраиваем наблюдателей
         setupObservers()
 
-        // Загружаем данные будильника, если редактируем существующий
         if (alarmId > 0) {
             viewModel.loadAlarm(alarmId)
         }
 
-        // Настраиваем обработчики кликов
         setupClickListeners()
     }
 
@@ -84,33 +78,35 @@ class AlarmEditFragment : Fragment() {
         }
     }
 
-    // app/src/main/java/com/euktop/studentalarm/AlarmEditFragment.kt
-// В методе setupObservers() исправляем обработку uiMessage:
     private fun setupObservers() {
-        // Наблюдаем за состоянием будильника
         viewModel.alarmState.observe(viewLifecycleOwner) { state ->
             updateTimeDisplay(state.hour, state.minute)
             updateDaysDisplay(state.daysOfWeek)
             updateDescriptionDisplay(state.description)
         }
 
-        // Наблюдаем за сообщениями UI
         viewModel.uiMessage.observe(viewLifecycleOwner) { message ->
             when (message) {
-                is UiMessage.Success -> {
-                    // Возвращаемся назад при успешном сохранении
+                is AlarmEditMessage.Success -> {
+                    if (message.shouldSchedule) {
+                        lifecycleScope.launch {
+                            val app = requireActivity().application as AlarmApplication
+                            val alarm = app.alarmRepository.getAlarmById(message.alarmId)
+                            alarm?.let {
+                                app.alarmScheduler.scheduleAlarm(it)
+                            }
+                        }
+                    }
                     findNavController().popBackStack()
                 }
-                is UiMessage.Error -> {
+                is AlarmEditMessage.Error -> {
                     Toast.makeText(requireContext(), message.message, Toast.LENGTH_SHORT).show()
                 }
                 null -> {
-                    // Игнорируем null значения
                 }
             }
         }
 
-        // Наблюдаем за показами диалогов
         viewModel.showTimePicker.observe(viewLifecycleOwner) { show ->
             if (show && !isTimePickerShowing) {
                 showMaterialTimePicker()
@@ -204,17 +200,11 @@ class AlarmEditFragment : Fragment() {
                 }
             }
             .setPositiveButton(getString(R.string.ok)) { _, _ ->
-                // Обновляем дни в ViewModel
-                tempSelectedDays.forEach { day ->
-                    // Устанавливаем все выбранные дни
-                    // Для упрощения просто обновим весь набор
-                }
-                // Очищаем текущий набор и устанавливаем новый
                 state.daysOfWeek.forEach { day ->
-                    viewModel.toggleDayOfWeek(day) // Снимаем старые
+                    viewModel.toggleDayOfWeek(day)
                 }
                 tempSelectedDays.forEach { day ->
-                    viewModel.toggleDayOfWeek(day) // Устанавливаем новые
+                    viewModel.toggleDayOfWeek(day)
                 }
                 viewModel.hideDaysDialog()
                 isDaysDialogShowing = false
@@ -319,7 +309,6 @@ class AlarmEditFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        // Выбор времени
         binding.timeSelectionContainer.setOnClickListener {
             viewModel.showTimePicker()
         }
@@ -332,17 +321,14 @@ class AlarmEditFragment : Fragment() {
             viewModel.showTimePicker()
         }
 
-        // Выбор дней повторения
         binding.btnRepeat.setOnClickListener {
             viewModel.showDaysDialog()
         }
 
-        // Описание
         binding.btnDescription.setOnClickListener {
             viewModel.showDescriptionDialog()
         }
 
-        // Кнопки отмены и сохранения
         binding.btnCancel.setOnClickListener {
             findNavController().popBackStack()
         }
@@ -353,7 +339,6 @@ class AlarmEditFragment : Fragment() {
     }
 
     private fun checkPermissionsAndSave() {
-        // Проверяем валидность времени
         val state = viewModel.alarmState.value
         if (state != null && (state.hour < 0 || state.hour > 23 || state.minute < 0 || state.minute > 59)) {
             Toast.makeText(requireContext(), getString(R.string.invalid_time), Toast.LENGTH_SHORT).show()
