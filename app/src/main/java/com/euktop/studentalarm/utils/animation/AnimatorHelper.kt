@@ -20,22 +20,6 @@ object AnimatorHelper {
         val toY: Float
     )
 
-/*    fun slideView(
-        view: View,
-        fromY: Float,
-        toY: Float,
-        duration: Long,
-        onStart: (() -> Unit)? = null,
-        onEnd: (() -> Unit)? = null
-    ) {
-        view.visibility = View.VISIBLE
-        val animator = ObjectAnimator.ofFloat(view, "translationY", fromY, toY)
-        animator.duration = duration
-        animator.doOnStart { onStart?.invoke() }
-        animator.doOnEnd { onEnd?.invoke() }
-        animator.start()
-    }*/
-
     fun slideViewFromDirection(
         view: View,
         direction: Direction,
@@ -131,47 +115,6 @@ object AnimatorHelper {
         animatorX.start()
         animatorY.start()
     }
-
-/*    fun fadeView(
-        view: View,
-        fromAlpha: Float,
-        toAlpha: Float,
-        duration: Long,
-        onStart: (() -> Unit)? = null,
-        onEnd: (() -> Unit)? = null
-    ) {
-        view.visibility = View.VISIBLE
-        val animator = ObjectAnimator.ofFloat(view, "alpha", fromAlpha, toAlpha)
-        animator.duration = duration
-        animator.doOnStart { onStart?.invoke() }
-        animator.doOnEnd { onEnd?.invoke() }
-        animator.start()
-    }
-
-    fun scaleView(
-        view: View,
-        fromX: Float,
-        toX: Float,
-        fromY: Float,
-        toY: Float,
-        duration: Long,
-        onStart: (() -> Unit)? = null,
-        onEnd: (() -> Unit)? = null
-    ) {
-        view.visibility = View.VISIBLE
-        val animatorX = ObjectAnimator.ofFloat(view, "scaleX", fromX, toX)
-        val animatorY = ObjectAnimator.ofFloat(view, "scaleY", fromY, toY)
-
-        animatorX.duration = duration
-        animatorY.duration = duration
-
-        animatorX.doOnStart { onStart?.invoke() }
-        animatorX.doOnEnd { onEnd?.invoke() }
-
-        animatorX.start()
-        animatorY.start()
-    }*/
-
     fun bounceView(
         view: View,
         scale: Float = 1.1f,
