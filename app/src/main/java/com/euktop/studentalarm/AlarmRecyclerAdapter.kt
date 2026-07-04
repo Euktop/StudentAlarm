@@ -13,28 +13,20 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 
 class AlarmRecyclerAdapter(
-    private val context: Context,
-    private var alarms: List<Alarm> = emptyList()
+    private val context: Context
 ) : RecyclerView.Adapter<AlarmRecyclerAdapter.ViewHolder>() {
 
-    var onSwitchChanged: ((alarm: Alarm, isChecked: Boolean) -> Unit)? = null
-    var onItemClick: ((alarm: Alarm) -> Unit)? = null
-    var onItemLongClick: ((alarm: Alarm) -> Unit)? = null
-
-    var onSelectionModeChanged: ((isSelectionMode: Boolean) -> Unit)? = null
-    var onSelectedCountChanged: ((count: Int) -> Unit)? = null
-
-    private var isSelectionMode = false
-    private val selectedIds = mutableSetOf<Long>()
+    private var alarms: List<Alarm> = emptyList()
+    private val viewHolderBinder = AlarmViewHolderBinder(context)
+    private val clickHandler = AlarmClickHandler(context, AlarmPermissionManager(context))
+    private val modeManager = AlarmModeManager()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val checkBoxSelect: CheckBox = view.findViewById(R.id.checkBoxSelect)
         val timeTextView: TextView = view.findViewById(R.id.TimeTextView)
         val descriptionTextView: TextView = view.findViewById(R.id.DescriptionTextView)
         val repetitionRateTextView: TextView = view.findViewById(R.id.RepetitionRateTextView)
-        @SuppressLint("UseSwitchCompatOrMaterialCode")
         val isEnabledAlarmSwitch: Switch = view.findViewById(R.id.IsEnabledAlarmSwitch)
-        /*val itemLayout: View = view.findViewById(R.id.itemLayout)*/
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -46,157 +38,45 @@ class AlarmRecyclerAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val alarm = alarms[position]
 
-        holder.timeTextView.text = alarm.formattedTime()
-        holder.descriptionTextView.text = alarm.description
-        holder.repetitionRateTextView.text = alarm.getRepetitionText(context)
+        // 1. Биндинг данных (только отображение)
+        viewHolderBinder.bind(
+            holder,
+            alarm,
+            modeManager.isSelectionMode,
+            modeManager.isSelected(alarm.id)
+        )
 
-        if (isSelectionMode) {
-            holder.checkBoxSelect.visibility = View.VISIBLE
-            holder.isEnabledAlarmSwitch.visibility = View.GONE
-        } else {
-            holder.checkBoxSelect.visibility = View.GONE
-            holder.isEnabledAlarmSwitch.visibility = View.VISIBLE
-        }
-
-        if (!isSelectionMode) {
-            holder.isEnabledAlarmSwitch.setOnCheckedChangeListener(null)
-            holder.isEnabledAlarmSwitch.isChecked = alarm.isEnabled
-
-            val hasAllPermissions = PermissionManager.hasAllAlarmPermissions(context)
-
-            if (!hasAllPermissions) {
-                holder.isEnabledAlarmSwitch.isEnabled = false
-                holder.isEnabledAlarmSwitch.alpha = 0.5f
-
-                if (alarm.isEnabled) {
-                    holder.isEnabledAlarmSwitch.isChecked = false
-                }
-            } else {
-                holder.isEnabledAlarmSwitch.isEnabled = true
-                holder.isEnabledAlarmSwitch.alpha = 1f
-            }
-
-            holder.isEnabledAlarmSwitch.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked && !PermissionManager.hasAllAlarmPermissions(context)) {
-                    holder.isEnabledAlarmSwitch.isChecked = false
-                    showPermissionsRequiredDialog()
-                    return@setOnCheckedChangeListener
-                }
-                onSwitchChanged?.invoke(alarm, isChecked)
-            }
-        }
-
-        holder.checkBoxSelect.isChecked = selectedIds.contains(alarm.id)
-        holder.checkBoxSelect.setOnClickListener {
-            toggleSelection(alarm.id)
-            notifyItemChanged(position)
-        }
-
-        holder.itemView.setOnClickListener {
-            if (isSelectionMode) {
-                toggleSelection(alarm.id)
-                notifyItemChanged(position)
-            } else {
-                onItemClick?.invoke(alarm)
-            }
-        }
-
-        holder.itemView.setOnLongClickListener {
-            if (!isSelectionMode) {
-                enterSelectionMode()
-                toggleSelection(alarm.id)
-                notifyItemChanged(position)
-                onItemLongClick?.invoke(alarm)
-                true
-            } else {
-                false
-            }
-        }
-
-        setupRippleEffect(holder.itemView)
-
-        holder.itemView.isClickable = true
-        holder.itemView.isLongClickable = true
-    }
-
-    private fun setupRippleEffect(view: View) {
-        val attrs = intArrayOf(android.R.attr.selectableItemBackground)
-        val typedArray = context.obtainStyledAttributes(attrs)
-        val backgroundResource = typedArray.getResourceId(0, 0)
-        typedArray.recycle()
-
-        view.apply {
-            isClickable = true
-            foreground = ContextCompat.getDrawable(context, backgroundResource)
-        }
+        // 2. Настройка обработчиков кликов
+        clickHandler.setupClickListeners(holder, alarm, modeManager.isSelectionMode)
     }
 
     override fun getItemCount(): Int = alarms.size
 
-    @SuppressLint("NotifyDataSetChanged")
     fun updateAlarms(newAlarms: List<Alarm>) {
         alarms = newAlarms
         notifyDataSetChanged()
     }
 
-    fun enterSelectionMode() {
-        if (!isSelectionMode) {
-            isSelectionMode = true
-            selectedIds.clear()
-            notifyDataSetChanged()
-            onSelectionModeChanged?.invoke(true)
-            onSelectedCountChanged?.invoke(0)
-        }
+    // Публичные методы для делегирования
+    fun enableSelectionMode() = modeManager.enableSelectionMode()
+    fun disableSelectionMode() = modeManager.disableSelectionMode()
+    fun toggleSelection(alarmId: Long) = modeManager.toggleSelection(alarmId)
+    fun clearSelection() = modeManager.clearSelection()
+
+    // Публичные коллбэки
+    fun setOnSwitchChanged(listener: (Alarm, Boolean) -> Unit) {
+        clickHandler.onSwitchChanged = listener
     }
 
-    fun exitSelectionMode() {
-        if (isSelectionMode) {
-            isSelectionMode = false
-            selectedIds.clear()
-            notifyDataSetChanged()
-            onSelectionModeChanged?.invoke(false)
-            onSelectedCountChanged?.invoke(0)
-        }
+    fun setOnItemClick(listener: (Alarm) -> Unit) {
+        clickHandler.onItemClick = listener
     }
 
-    fun toggleSelection(alarmId: Long) {
-        if (selectedIds.contains(alarmId)) {
-            selectedIds.remove(alarmId)
-        } else {
-            selectedIds.add(alarmId)
-        }
-        onSelectedCountChanged?.invoke(selectedIds.size)
+    fun setOnAlarmSelected(listener: (Long) -> Unit) {
+        clickHandler.onAlarmSelected = listener
     }
 
-    fun selectAll() {
-        selectedIds.clear()
-        selectedIds.addAll(alarms.map { it.id })
-        notifyDataSetChanged()
-        onSelectedCountChanged?.invoke(selectedIds.size)
-    }
-
-    fun deselectAll() {
-        selectedIds.clear()
-        notifyDataSetChanged()
-        onSelectedCountChanged?.invoke(0)
-    }
-
-    fun getSelectedAlarms(): List<Alarm> {
-        return alarms.filter { selectedIds.contains(it.id) }
-    }
-
-    fun isSelectionMode(): Boolean = isSelectionMode
-    fun isAllSelected(): Boolean = selectedIds.size == alarms.size
-
-    private fun showPermissionsRequiredDialog() {
-        if (context is Activity) {
-            val activity = context
-            if (activity is MainActivity) {
-                activity.checkPermissionsAndExecute {
-                }
-            } else {
-                PermissionManager.showAllPermissionsDialog(activity)
-            }
-        }
+    fun setOnSelectionModeRequested(listener: () -> Unit) {
+        clickHandler.onSelectionModeRequested = listener
     }
 }

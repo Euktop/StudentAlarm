@@ -66,7 +66,7 @@ class AlarmsFragment : Fragment() {
             }
         }
 
-        adapter.onSelectedCountChanged = { count ->
+        adapter. = { count ->
             binding.tvSelectedCount.text = getString(R.string.selected, count)
 
             if (adapter.isAllSelected()) {
